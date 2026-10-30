@@ -1,0 +1,13 @@
+{
+  "case_id": "case_004",
+  "teaching_title": "DB 반영 후 응답 유실",
+  "expected_initial_action": "REPROCESS",
+  "outcome_at_decision": "RESOLVED_AFTER_APPROVED_REPROCESS",
+  "mismatched_transaction_ids": [],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": "query_operation_then_retrieve_committed_result"
+}

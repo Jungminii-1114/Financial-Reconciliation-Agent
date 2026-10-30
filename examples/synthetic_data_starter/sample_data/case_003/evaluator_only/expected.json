@@ -1,0 +1,15 @@
+{
+  "case_id": "case_003",
+  "teaching_title": "거래별 금액 불일치",
+  "expected_initial_action": "ESCALATE",
+  "outcome_at_decision": "ESCALATED",
+  "mismatched_transaction_ids": [
+    "TX0002"
+  ],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": null
+}

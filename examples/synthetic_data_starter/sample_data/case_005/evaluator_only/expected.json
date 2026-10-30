@@ -1,0 +1,13 @@
+{
+  "case_id": "case_005",
+  "teaching_title": "DB 반영 전 중단",
+  "expected_initial_action": "REPROCESS",
+  "outcome_at_decision": "RESOLVED_AFTER_APPROVED_REPROCESS",
+  "mismatched_transaction_ids": [],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": "confirm_status_then_retry_only_if_policy_allows"
+}

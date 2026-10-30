@@ -1,0 +1,26 @@
+{
+  "sample_cases": 6,
+  "checks": [
+    "같은 코드·시드·거래 수에서 전달 예제와 동일한 파일 지문",
+    "시드 변경 시 다른 데이터 지문",
+    "거래 2·100·500건에서도 6개 사건의 정합성 검사 통과",
+    "기존 출력 폴더 덮어쓰기 거부",
+    {
+      "rejected_corruption": "future",
+      "reason": "미래에 수신할 외부 자료가 초기 관측에 노출됐습니다."
+    },
+    {
+      "rejected_corruption": "duplicate",
+      "reason": "case_001: 기본키가 중복됩니다."
+    },
+    {
+      "rejected_corruption": "wrong_label",
+      "reason": "case_001: 기대 행동 라벨이 데이터와 다릅니다."
+    },
+    {
+      "rejected_corruption": "changed_file",
+      "reason": "파일 추가·누락·변경 또는 해시 불일치"
+    }
+  ],
+  "scope": "데이터 생성·검사 예제. Agent 실행·실제 장애·금융 실무 타당성을 입증하지 않음."
+}

@@ -1,0 +1,22 @@
+[
+  {
+    "at": "2026-10-30T10:05:00+09:00",
+    "type": "insert_external",
+    "row": {
+      "external_id": "EXT0003",
+      "transaction_id": "TX0003",
+      "batch_id": "BATCH001",
+      "amount_krw": 3500,
+      "currency": "KRW",
+      "status": "SETTLED",
+      "event_time": "2026-10-30T09:58:00+09:00",
+      "known_at": "2026-10-30T10:05:00+09:00"
+    }
+  },
+  {
+    "at": "2026-10-30T10:05:00+09:00",
+    "type": "complete_ingestion",
+    "batch_id": "BATCH001",
+    "new_input_version": 2
+  }
+]

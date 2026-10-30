@@ -1,0 +1,13 @@
+{
+  "case_id": "case_001",
+  "teaching_title": "재처리 가능한 중단 배치",
+  "expected_initial_action": "REPROCESS",
+  "outcome_at_decision": "RESOLVED_AFTER_APPROVED_REPROCESS",
+  "mismatched_transaction_ids": [],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": null
+}

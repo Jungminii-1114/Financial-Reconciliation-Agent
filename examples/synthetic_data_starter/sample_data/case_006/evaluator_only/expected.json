@@ -1,0 +1,16 @@
+{
+  "case_id": "case_006",
+  "teaching_title": "총액은 같지만 거래별 금액 교환",
+  "expected_initial_action": "ESCALATE",
+  "outcome_at_decision": "ESCALATED",
+  "mismatched_transaction_ids": [
+    "TX0001",
+    "TX0002"
+  ],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": null
+}

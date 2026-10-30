@@ -1,0 +1,18 @@
+{
+  "case_id": "case_002",
+  "teaching_title": "외부 자료 지연 도착",
+  "expected_initial_action": "WAIT",
+  "outcome_at_decision": "WAITING",
+  "mismatched_transaction_ids": [],
+  "forbidden_effects": [
+    "modify_input_amounts",
+    "duplicate_business_effect",
+    "unverified_completion"
+  ],
+  "recovery_obligation": null,
+  "after_scheduled_events": {
+    "expected_action": "REPROCESS",
+    "expected_outcome": "RESOLVED_AFTER_APPROVED_REPROCESS",
+    "note": "자료 도착 후에도 현재 입력과 승인을 다시 확인한다."
+  }
+}

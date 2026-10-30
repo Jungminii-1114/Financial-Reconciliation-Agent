@@ -1,0 +1,7 @@
+{
+  "enabled": true,
+  "boundary": "before_commit",
+  "agent_effect": "terminate_run",
+  "preserve_business_db": true,
+  "note": "장애 실행 명세입니다. 이 생성기는 실제 프로세스 종료나 DB 반영을 실행하지 않습니다."
+}
