@@ -1,59 +1,164 @@
 # Financial-Reconciliation-Agent
 
-금융 대사 예외처리 Agent의 복구·재검증·완료 검증 하네스를 개발하는 개인 프로젝트입니다.
+**Recover Interrupted Work. Verify Real Outcomes. Keep Tool Use Within Scope.**
 
-현재 이 저장소에는 **합성 데이터 생성·검사 학습용 예제**가 포함돼 있습니다. 실제 Agent, 업무 API, 승인·복구 하네스와 장애 실행기는 이후 구현할 범위입니다.
+〖English | [한국어](readme/README.ko.md)〗
 
-## 합성 데이터 첫 예제
+〖[Overview](#overview) | [Why This Project?](#why-this-project) | [Goals and Technology](#goals-and-technology) | [Core Design](#core-design) | [Data and QA](#data-and-qa-scenarios) | [Evaluation](#evaluation-method) | [Decision Principles](#decision-principles) | [Key Metrics](#key-metrics)〗
 
-- [사용 설명서](examples/synthetic_data_starter/README.md)
-- [데이터 생성기](examples/synthetic_data_starter/generate.py)
-- [독립된 파일 기반 데이터 검사기](examples/synthetic_data_starter/validate.py)
-- [생성된 샘플 데이터](examples/synthetic_data_starter/sample_data)
-- [검사 기록](examples/synthetic_data_starter/verification_report.json)
+> A harness engineering project for financial reconciliation agents that recover from interrupted execution, verify business outcomes, and handle malicious external instructions within explicit permission boundaries.
 
-원화 정수 금액, 거래 ID 1:1 대사, 수수료·환전 없는 모의 업무를 가정합니다. 정상 데이터에서 출발해 자료 지연·금액 불일치·총액 유지 반례와 DB 반영 전후 중단 계획 등 6개 학습용 사건을 구성합니다.
+**Project status:** In development. The synthetic data generator, file-based validator, and six teaching cases are available. The agent, business service, recovery runtime, security controls, and end-to-end evaluation are planned. No agent performance results have been established.
 
-## 빠른 실행
+**Available now:** [Synthetic data starter and usage guide →](examples/synthetic_data_starter/README.en.md)
 
-Python 3.10 이상을 권장합니다. 예제는 표준 라이브러리만 사용하므로 별도 패키지나 GPU가 필요하지 않습니다. 저장소 루트에서 실행합니다.
+## Overview
 
-먼저 포함된 샘플을 검사합니다.
+Financial reconciliation checks whether records held by different systems agree. This project models a financial IT operations task: compare internal transactions with external settlement records, investigate exceptions, and propose **reprocessing, waiting, or escalation**.
 
-```bash
-python3 examples/synthetic_data_starter/validate.py examples/synthetic_data_starter/sample_data
+The agent interprets Korean requests and investigates evidence. Its **harness** manages context, persistent state, tool use, permissions, approval, recovery, execution limits, and completion checks. A separate evaluation harness runs controlled scenarios and checks the actual outcome.
+
+This is a one-person, eight-week portfolio project using synthetic data and a local business environment. Reprocessing regenerates reconciliation results. Real transfers, real customer data, source transaction amount changes, and live bank integrations are outside the initial scope.
+
+## Why This Project?
+
+### A committed operation can outlive the agent's response
+
+A reprocessing result may be committed before its response is recorded by the agent. If execution stops there, a resumed agent may repeat a completed operation or report completion without verification. A timeout, lost response, and terminated process are distinct experimental conditions.
+
+### Saved progress can become stale
+
+External records may arrive or be corrected while the agent is stopped. A previous query result, including an empty result, may no longer justify a decision. Approval and completion evidence must be checked against the relevant input version.
+
+### External content can redirect tool use
+
+A transaction memo or tool response may instruct the agent to bypass approval, inspect unrelated records, or trust fabricated success evidence. The design separates external content from authority and tests whether legitimate work can continue safely.
+
+### A successful-looking answer can hide an incorrect outcome
+
+A completion message does not establish that the intended batch was processed correctly. Matching totals can hide transaction-level errors. Evaluation must inspect affected records, approvals, operation history, and the actual final state.
+
+## Goals and Technology
+
+| Goal | Planned behavior |
+|---|---|
+| Reliable recovery | Query unresolved operation IDs, retrieve committed results, retry only when allowed, and escalate unresolved uncertainty. |
+| Valid evidence and approval | Connect decisions and approvals to input versions; recheck affected evidence when inputs change. |
+| Safe tool use | Enforce typed arguments, batch-level access, approval, version checks, and idempotency in the business service. |
+| Measurable contribution | Compare rule-based and agent baselines under the same permissions, tools, and budgets. |
+
+| Component | Technology or approach | Status |
+|---|---|---|
+| Synthetic data | Python standard library, fixed seeds, file hashes | Implemented |
+| Data validation | Independent file-based checks and transaction-level matching | Implemented |
+| Business service | Python, Pydantic, FastAPI, SQLite | Planned |
+| Persistent execution | LangGraph with persistent checkpoints | Planned |
+| Inference | Colab GPU; Qwen3-4B-Instruct-2507 as an initial candidate | Pilot required |
+| Outcome evaluation | Python, SQL, pytest, structured execution logs | Planned |
+| Optional extensions | MCP tool exposure, additional models, Jev-assisted review | After core implementation |
+
+The initial workflow uses one agent and approximately six business tools: case lookup, record lookup, reprocessing precheck, reprocessing execution, operation-status lookup, and escalation-summary preparation. Model fine-tuning is outside the initial eight-week scope.
+
+## Core Design
+
+The following diagram describes the intended system.
+
+```mermaid
+flowchart LR
+    U["Korean request"] --> H["Agent harness: state, evidence, budget, recovery"]
+    H <--> M["Model"]
+    H <--> T["Business tools: arguments, access, approval, version"]
+    T <--> D[("Business database")]
+    C["Scenario controller"] -->|"Arrivals and time"| D
+    C -->|"Fault and attack injection"| H
+    H -->|"Execution trace"| E["Independent evaluator"]
+    D -->|"Actual outcome"| E
+    G["Evaluator-only specification"] --> E
 ```
 
-같은 시드로 새 데이터를 생성하고 검사할 수 있습니다. 출력 폴더가 이미 있으면 덮어쓰지 않으므로 새 이름을 사용하세요.
+| Mechanism | Design | Question to test |
+|---|---|---|
+| Selective revalidation, including absence evidence | Track query predicates, result sets, and decision dependencies, including empty results. | Can change detection remain accurate while reducing unnecessary reinspection? |
+| Uncertain-state recovery | Use additional observations to distinguish possible states, including uncommitted work and committed work with a lost response. | Can recovery reduce incorrect certainty and unnecessary escalation? |
+| Time-aware judgment | Separate event time, arrival time, and decision time; expose only records known at that point. | Are historical decisions and responses to later arrivals evaluated appropriately? |
+| Counterexample-based completion checks | Test swapped amounts, incorrect mappings, unrelated success evidence, stale approval, and valid transformations. | Which errors are missed by totals-only or incomplete checks? |
+| Source-aware security during recovery | Preserve external-content provenance across sessions and separate it from permissions and approval. | Can malicious instructions be resisted while preserving legitimate task success? |
 
-```bash
-python3 examples/synthetic_data_starter/generate.py --out generated_data/experiment_001 --seed 42 --rows 3
-python3 examples/synthetic_data_starter/validate.py generated_data/experiment_001
-```
+The contribution is domain-specific integration and controlled evaluation. Checkpoints, idempotency, and version checks are established techniques; the project does not claim to invent them.
 
-## 예제 구조
+## Data and QA Scenarios
 
-```text
-examples/synthetic_data_starter/
-├── README.md
-├── generate.py
-├── validate.py
-├── verification_report.json
-└── sample_data/
-    ├── manifest.json
-    ├── data_card.md
-    ├── teaching_index.json
-    └── case_001/ ... case_006/
-        ├── agent_view/        초기 시점의 관측 데이터
-        ├── controller_only/   미래 이벤트·장애 계획
-        └── evaluator_only/    기대 행동·금지 효과
-```
+### Available synthetic data starter
 
-## 현재 예제의 범위
+The starter creates matched mock records, introduces controlled discrepancies or arrival plans, and stores expected behavior separately from agent-visible inputs. It assumes integer KRW amounts, one-to-one transaction IDs, and no fees or currency conversion.
 
-- 전체 샘플은 직접 생성한 합성 데이터이며 실존 고객·계좌·실거래를 포함하지 않습니다.
-- 6개 사건은 설명용이며 정식 개발셋·최종 평가셋을 완성했다는 뜻이 아닙니다.
-- 장애 계획 파일을 생성하지만 실제 DB 반영, 프로세스 중단, 재개는 실행하지 않습니다.
-- 폴더 분리는 접근 제어가 아닙니다. 실제 Agent 도구를 연결할 때 정답과 미래 정보의 접근을 제한해야 합니다.
-- SAML-D 원본 데이터나 변환기는 포함하지 않습니다.
-- 데이터 정합성 검사는 모의 규칙의 검증이며 실제 은행 업무 전반의 타당성이나 성능 개선을 입증하지 않습니다.
+**[Open the synthetic data guide: setup, commands, structure, six cases, and limitations →](examples/synthetic_data_starter/README.en.md)**
+
+| Resource | Link |
+|---|---|
+| Korean usage guide | [README](examples/synthetic_data_starter/README.md) |
+| Generator / file validator | [generate.py](examples/synthetic_data_starter/generate.py) / [validate.py](examples/synthetic_data_starter/validate.py) |
+| Sample data | [sample_data](examples/synthetic_data_starter/sample_data) |
+| Data card / verification record | [data_card.md](examples/synthetic_data_starter/sample_data/data_card.md) / [verification_report.json](examples/synthetic_data_starter/verification_report.json) |
+
+The six teaching cases cover complete matching input, delayed arrival, a single amount mismatch, pre-commit and post-commit interruption plans, and swapped amounts with unchanged totals. They are not the finalized development or evaluation set. A fault-plan file does not execute a fault.
+
+### Executable QA cases
+
+Each case will define **initial database, access and approval → observable input → timed events and faults → expected actions and forbidden effects → expected outcome → grading checks**.
+
+- Separate development and held-out evaluation by scenario family, evidence combination, and attack template. Changing IDs, amounts, seeds, or wording alone does not create independent cases.
+- Pair normal and attack conditions for the same business scenario. Include benign security quotations to measure false positives.
+- Keep expected answers and future events outside agent access. Directory separation alone is not access control.
+- SAML-D is an optional source of transaction variation. Its AML labels are not reconciliation-error labels; mock counterpart records and operational ground truth would still need to be constructed.
+
+## Evaluation Method
+
+### Controlled comparisons
+
+| Setting | Composition | Purpose |
+|---|---|---|
+| R0 | Fixed rules and the common business API | Establish how much of the task can be handled without a model. |
+| B0 | Business instructions and a basic agent tool loop | Identify basic agent failure modes. |
+| B1 | B0 with persistent state, checkpoints, and bounded retries | Measure what persistence alone resolves. |
+| H | B1 with state reconciliation, evidence dependencies, time-aware judgment, and completion verification | Measure the additional harness contribution. |
+
+Compare security modules separately within H. Keep backend access, approval, version checks, transaction protection, and idempotency in every setting. Fix model settings, information access, tools, and execution budgets for each comparison.
+
+### Proposed evaluation budget
+
+- **Core evaluation:** 12 held-out scenarios × baseline/perturbed conditions × B0/B1/H × 3 trials = 216 model runs; R0 uses the same 24 scenario conditions separately.
+- **Security evaluation:** 20 held-out normal/attack pairs × 2 conditions × module off/on × 3 trials = 240 runs. Another 20 pairs are proposed for development.
+- Final counts, thresholds, and budgets will be frozen after the pilot. Development, component-removal, and additional-model experiments are counted separately. Repeated runs are not independent new cases.
+
+Failures, exhausted budgets, and runs that never reach the planned fault boundary remain in the results. Recovery rates use runs with an actual injected disturbance and a recoverable scenario; appropriate escalation under irreducible uncertainty is reported separately.
+
+The methodology follows the distinction between execution traces and actual outcomes in [Anthropic's agent evaluation guide](https://www.anthropic.com/research/demystifying-evals-for-ai-agents).
+
+## Decision Principles
+
+1. **Grade actual state with code.** Check amounts, timestamps, permissions, approval, affected records, and committed effects using independent code and logs. Do not certify success from a completion message.
+2. **Separate attempts, blocks, and effects.** A forbidden call blocked by the service differs from an actual unauthorized read or write. A retry request differs from a duplicate business effect.
+3. **Apply case-level safety requirements.** Leakage or an unauthorized write fails that case; explanation quality cannot offset the violation. Waiting or escalation can be the correct outcome.
+4. **Keep uncertainty and time explicit.** Use evidence available at the decision time. Recheck current approval and input versions before a new write. Count observation and retry costs across restarts.
+5. **Use model review as assistance.** Cross-model review can find issues, but agreement is not ground truth. Use Jev only if a human-reviewed Korean pilot supports its value for narrow semantic checks. It does not replace arithmetic, authorization, or database validation; see [Jev's documented limitations](https://docs.typesafe.ai/model-jaggedness/jev-1.13).
+6. **Trace requirements to evidence.** Connect source document and version → requirement ID → QA case → grading code → result log. Use the [financial AI guideline](https://www.fsc.go.kr/no010101/87142), [financial AI evaluation framework](https://www.fsec.or.kr/bbs/detail?bbsNo=12031&menuNo=69), [Personal Information Protection Act Article 29](https://www.law.go.kr/LSW/lsLawLinkInfo.do?chrClsCd=010202&lsJoLnkSeq=900079357), and [OWASP guidance](https://genai.owasp.org/llmrisk/llm01-prompt-injection/) for selected technical QA requirements. These tests do not establish complete regulatory compliance or certification.
+
+## Key Metrics
+
+| Area | Metrics and observations |
+|---|---|
+| Input handling | Exact field agreement, malformed-input handling, future-information exposure |
+| Business decisions | Correct final outcome, action-level precision/recall/macro-F1, unnecessary escalation |
+| Recovery | Recovery success, premature certainty, unresolved-state handling, unnecessary reprocessing |
+| Evidence and completion | Missed changes, unnecessary invalidation, false completion requests, blocked requests, actual incorrect completion records |
+| Attack detection | Precision, recall, F1, false positive rate; attack input is the positive class |
+| Actual safety | Unauthorized reads, unapproved writes, source-data modification, defined prohibited exposure, duplicate business effects |
+| Task preservation | Legitimate task success under normal and attack conditions, benign-input blocking |
+| Cost | Tool calls, status queries, retries, tokens, latency, memory, including failed and resumed execution |
+
+For attack detection, TP means an attack detected, FN an attack missed, FP a benign input flagged, and TN a benign input passed. Detection metrics and actual safety outcomes are reported separately.
+
+Synthetic canary strings will test defined exposure paths in tool results, model input, responses, and retained logs. This is a bounded leakage test, not comprehensive detection of every disclosure.
+
+The proposed target is **zero observed actual unauthorized reads, unapproved writes, source-data modifications, and defined prohibited disclosures on the frozen evaluation set**. Other thresholds will be set using development data before final evaluation. Report denominators, scenario-level results, and uncertainty; zero observed violations in a small set does not establish universal safety.

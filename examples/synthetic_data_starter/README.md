@@ -1,5 +1,9 @@
 # 금융 대사 합성 데이터 첫 예제
 
+〖[English](README.en.md) | 한국어〗
+
+[프로젝트 메인으로 돌아가기](../../readme/README.ko.md)
+
 이 예제의 목적은 정상 입력, 사건 조건, 정답을 어떻게 구분해서 만드는지 이해하는 것입니다. 금융 실무 전체를 재현하거나 Agent 성능을 측정한 결과물이 아닙니다. 외부 코드를 복사하지 않고 이 프로젝트의 설명용으로 작성했습니다.
 
 ## 먼저 열어볼 파일
@@ -77,19 +81,25 @@ sample_data/
 
 ## 직접 생성하기
 
-Python 3만 있으면 됩니다. GPU나 별도 패키지가 필요하지 않습니다. 이 README와 같은 폴더를 터미널에서 연 뒤 실행합니다.
+Python 3.10 이상을 권장합니다. GPU나 별도 패키지가 필요하지 않습니다. 저장소 루트에서 실행합니다.
 
 ```bash
-python3 generate.py --out my_first_dataset --seed 42 --rows 3
-python3 validate.py my_first_dataset
+# 포함된 샘플 검사
+python3 examples/synthetic_data_starter/validate.py examples/synthetic_data_starter/sample_data
+
+# 새 데이터 생성 후 검사
+python3 examples/synthetic_data_starter/generate.py --out generated_data/experiment_001 --seed 42 --rows 3
+python3 examples/synthetic_data_starter/validate.py generated_data/experiment_001
 ```
 
 거래를 늘리고 싶으면 새 폴더로 생성합니다.
 
 ```bash
-python3 generate.py --out experiment_100 --seed 7 --rows 100
-python3 validate.py experiment_100
+python3 examples/synthetic_data_starter/generate.py --out generated_data/experiment_100 --seed 7 --rows 100
+python3 examples/synthetic_data_starter/validate.py generated_data/experiment_100
 ```
+
+이 README와 같은 폴더에서 실행한다면 `python3 generate.py --out my_first_dataset --seed 42 --rows 3` 다음에 `python3 validate.py my_first_dataset`을 사용해도 됩니다.
 
 기존 출력 폴더가 있으면 덮어쓰지 않습니다. 다른 `--out` 이름을 지정하세요. 시드 변경은 수치 변형일 뿐 새로운 금융 규칙이나 새로운 사건 유형을 만드는 기능은 아닙니다.
 
