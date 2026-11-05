@@ -1,0 +1,7 @@
+{
+  "seed": 42,
+  "rows_per_batch": 100,
+  "profile": "benchmark",
+  "decision_at": "2026-11-05T10:00:00+09:00",
+  "security_pairs_per_split": 20
+}

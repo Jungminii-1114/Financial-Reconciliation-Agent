@@ -1,6 +1,6 @@
 # 금융 대사 Agent 하네스 — 설계 문서
 
-> 설계 기준: **2026-11-04 / v0.1**. 이 폴더는 구현을 위한 제안 명세다. 현재 구현물은 [합성 데이터 예제](../examples/synthetic_data_starter/README.md)이며, 아래 노드·업무 서비스·평가기는 아직 구현되지 않았다. 예시 JSON·함수·경로는 설계 예시다.
+> 설계 기준: **v0.1**, 구현 상태 갱신: **2026-11-05**. [자체 합성기 v1](data-generation/README.md)은 생성·독립 SQL 검사·시간 스냅샷·HTML/SQLite 열람까지 구현됐다. 아래 노드·업무 서비스·실제 결과 평가기는 아직 제안 명세다. [기존 교육용 예제](../examples/synthetic_data_starter/README.md)도 유지한다. 개별 문서의 설계 예시와 구현 상태를 구분한다.
 >
 > Engineering specifications are written in Korean; stable IDs and API names use English. Main README: [English](../README.md) · [한국어](../readme/README.ko.md).
 
@@ -8,6 +8,7 @@
 
 | 순서 | 문서 | 답하는 질문 |
 |---|---|---|
+| 시작 | [합성기 v1 사용 설명서](data-generation/README.md) · [설계](data-generation/design.md) · [Feature](data-generation/schemas.md) | 데이터 준비부터 직접 실행하려면? |
 | 1 | [Overall Plan](overall-plan/README.md) | 어떤 문제를 어디까지 구현하는가? |
 | 2 | [전체 구조](overall-plan/architecture.md) · [노드 지도](overall-plan/node-map.md) | 어떤 단계와 분기로 연결되는가? |
 | 3 | [Big Node](big-nodes/README.md) | 단계별 실행 순서·조건부 엣지·종료 정책은 무엇인가? |

@@ -2,6 +2,8 @@
 
 > v0.1 설계. [기존 예제](../../examples/synthetic_data_starter/README.md) · [상태 타입](state-and-types.md) · [복구](persistence-and-recovery.md)
 
+**2026-11-05 구현 연결:** [자체 합성기 v1 스키마](../data-generation/schemas.md)는 내부/외부 모두 known_at·row_revision을 제공하며 시간 이벤트를 재구성한다. 출력하는 SQLite 6개 테이블은 **열람용 입력 스냅샷**이고, 이 문서의 승인·작업·결과 DB 및 `load_teaching_fixture`/v1 적재 어댑터는 아직 계획이다. 아래 기존 파일 변환 표는 이전 교육용 형식에 해당한다. v1은 schema_version을 검사하는 별도 어댑터로 연결하고 열람용 digest를 업무 승인 digest로 재사용하지 않는다.
+
 ## 1. 기존 파일을 실행 환경으로 옮기는 어댑터
 
 `load_teaching_fixture(path) -> FixtureImport`를 코드로 구현한다. `agent_view`만 업무 DB의 초기 입력으로 적재하고, controller/evaluator 파일은 각각 별도 저장소로 보낸다. Agent의 파일 루트를 전체 fixture 폴더로 설정하지 않는다.

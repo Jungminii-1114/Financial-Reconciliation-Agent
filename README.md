@@ -8,9 +8,9 @@
 
 > A harness engineering project for financial reconciliation agents that recover from interrupted execution, verify business outcomes, and handle malicious external instructions within explicit permission boundaries.
 
-**Project status:** In development. The synthetic data generator, file-based validator, and six teaching cases are available. The agent, business service, recovery runtime, security controls, and end-to-end evaluation are planned. No agent performance results have been established.
+**Project status:** In development. The v1 synthetic generator, independent SQL validator, temporal snapshots, normal/attack pairs, HTML preview, and operator-only SQLite export are implemented. The agent, business service, recovery runtime, security controls, and end-to-end evaluation are planned. No agent performance results have been established.
 
-**Available now:** [Synthetic data starter and usage guide →](examples/synthetic_data_starter/README.en.md)
+**Available now:** [Synthetic data v1: one-command setup and usage guide →](docs/data-generation/README.en.md) · [Six-case teaching starter](examples/synthetic_data_starter/README.en.md)
 
 **Engineering docs (한국어):** [Overall plan](docs/README.md) · [Big Nodes](docs/big-nodes/README.md) · [Small Nodes](docs/small-nodes/README.md) · [Tool contracts](docs/tools/README.md)
 
@@ -51,8 +51,8 @@ A completion message does not establish that the intended batch was processed co
 
 | Component | Technology or approach | Status |
 |---|---|---|
-| Synthetic data | Python standard library, fixed seeds, file hashes | Implemented |
-| Data validation | Independent file-based checks and transaction-level matching | Implemented |
+| Synthetic data | Python standard library, fixed seeds, temporal events, paired security fixtures | Implemented |
+| Data validation and inspection | Independent SQLite matching, HTML preview, operator-only DB export | Implemented |
 | Business service | Python, Pydantic, FastAPI, SQLite | Planned |
 | Persistent execution | LangGraph with persistent checkpoints | Planned |
 | Inference | Colab GPU; Qwen3-4B-Instruct-2507 as an initial candidate | Pilot required |
@@ -89,6 +89,14 @@ flowchart LR
 The contribution is domain-specific integration and controlled evaluation. Checkpoints, idempotency, and version checks are established techniques; the project does not claim to invent them.
 
 ## Data and QA Scenarios
+
+### Synthetic data v1
+
+The current generator builds related internal/external records, controlled discrepancies, timed arrivals/corrections, private expected answers, and normal/attack pairs. One command generates and independently validates the bundle, then creates HTML and SQLite views; no SQL knowledge is required.
+
+**[Open the v1 usage guide: commands, configuration, features, scenarios, and validation →](docs/data-generation/README.en.md)**
+
+The default pilot contains 6 core development cases and 2 security pairs, totaling 10 case folders. The benchmark profile contains 18 core cases and 40 security pairs across development and held-out candidate splits, totaling 98 folders. These are evaluation candidates, not a frozen blind benchmark; pair variants are not independent attack families. Fault and attack plans do not execute faults or defenses.
 
 ### Available synthetic data starter
 
