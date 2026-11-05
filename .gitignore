@@ -2,3 +2,7 @@ __pycache__/
 *.py[cod]
 .DS_Store
 /generated_data/
+
+# Presentation scripts and seminar materials stay local.
+/docs/seminars/
+/local_presentations/
