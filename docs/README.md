@@ -1,6 +1,6 @@
 # 금융 대사 Agent 하네스 — 설계 문서
 
-> 설계 기준: **v0.1**, 구현 상태 갱신: **2026-11-05**. [자체 합성기 v1](data-generation/README.md)은 생성·독립 SQL 검사·시간 스냅샷·HTML/SQLite 열람까지 구현됐다. 아래 노드·업무 서비스·실제 결과 평가기는 아직 제안 명세다. [기존 교육용 예제](../examples/synthetic_data_starter/README.md)도 유지한다. 개별 문서의 설계 예시와 구현 상태를 구분한다.
+> 설계 기준: **v0.1**, 구현 상태 갱신: **2026-11-05**. [자체 합성기 v1](data-generation/README.md)은 생성·독립 SQL 검사·시간 스냅샷·HTML/SQLite 열람까지 구현됐다. [업무 DB 적재 어댑터](data-adapter/README.md)는 초기 적재·재개·시점별 읽기·입력 사건까지 구현됐다. 아래 노드·업무 Tool 서비스·실제 결과 평가기는 아직 제안 명세다. [기존 교육용 예제](../examples/synthetic_data_starter/README.md)도 유지한다. 개별 문서의 설계 예시와 구현 상태를 구분한다.
 >
 > Engineering specifications are written in Korean; stable IDs and API names use English. Main README: [English](../README.md) · [한국어](../readme/README.ko.md).
 
@@ -9,6 +9,7 @@
 | 순서 | 문서 | 답하는 질문 |
 |---|---|---|
 | 시작 | [합성기 v1 사용 설명서](data-generation/README.md) · [설계](data-generation/design.md) · [Feature](data-generation/schemas.md) | 데이터 준비부터 직접 실행하려면? |
+| 다음 연결 | [업무 DB 적재 어댑터](data-adapter/README.md) · [설계](data-adapter/design.md) · [검증](data-adapter/validation.md) | 검증한 데이터를 Agent용 저장소로 옮기고 재개하려면? |
 | 1 | [Overall Plan](overall-plan/README.md) | 어떤 문제를 어디까지 구현하는가? |
 | 2 | [전체 구조](overall-plan/architecture.md) · [노드 지도](overall-plan/node-map.md) | 어떤 단계와 분기로 연결되는가? |
 | 3 | [Big Node](big-nodes/README.md) | 단계별 실행 순서·조건부 엣지·종료 정책은 무엇인가? |

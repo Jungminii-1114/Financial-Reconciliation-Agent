@@ -8,9 +8,9 @@
 
 > 금융 대사 Agent가 실행 중단과 악성 외부 지시를 겪어도, 실제 처리 결과를 검증하고 정해진 권한 안에서 업무를 이어가도록 하네스를 설계하고 평가합니다.
 
-**프로젝트 상태:** 개발 중입니다. v1 합성기·독립 SQL 검사기·시점별 스냅샷·정상/공격 쌍·HTML 미리보기·열람용 SQLite 출력이 구현되어 있습니다. Agent, 업무 서비스, 실제 복구 실행기, 보안 통제, 종단 간 평가는 구현 계획이며 Agent 성능 결과는 아직 없습니다.
+**프로젝트 상태:** 개발 중입니다. 합성 데이터 생성·검사·열람, 버전 지정 업무 DB 적재 어댑터, 명시적 재개, 범위가 제한된 읽기 저장소, 원자적 도착·정정 사건 적용까지 구현했습니다. 6개 업무 Tool의 실제 핸들러, Agent, 승인·재처리 서비스, 실제 프로세스 복구 하네스, 보안 통제와 결과 평가는 계획이며 Agent 성능 결과는 아직 없습니다.
 
-**지금 실행할 수 있는 것:** [자체 합성기 v1: 한 명령 실행·사용 설명서 →](../docs/data-generation/README.md) · [교육용 6사례 예제](../examples/synthetic_data_starter/README.md)
+**지금 실행할 수 있는 것:** [자체 합성기 v1: 한 명령 실행·사용 설명서 →](../docs/data-generation/README.md) · [교육용 6사례 예제](../examples/synthetic_data_starter/README.md) · [업무 DB 적재 어댑터: 준비·조회·재개 →](../docs/data-adapter/README.md)
 
 **상세 설계 문서:** [Overall Plan](../docs/README.md) · [Big Node](../docs/big-nodes/README.md) · [Small Node](../docs/small-nodes/README.md) · [Tool 명세](../docs/tools/README.md)
 
@@ -53,7 +53,8 @@ Agent는 한국어 요청을 해석하고 증거를 조사합니다. **하네스
 |---|---|---|
 | 합성 데이터 | Python 표준 라이브러리·고정 시드·시간 이벤트·정상/공격 쌍 | 구현 |
 | 데이터 검사·열람 | 독립 SQLite 대조·HTML 미리보기·열람용 DB 출력 | 구현 |
-| 업무 서비스 | Python·Pydantic·FastAPI·SQLite | 계획 |
+| 실험 저장소·입력 사건 | Python sqlite3·버전 지정 적재·과거 이력·역할별 DB | 구현; [사용 설명서](../docs/data-adapter/README.md) |
+| 업무 서비스 | 6개 Tool·승인·재처리, Python/Pydantic/FastAPI 연결 | 계획 |
 | 지속 실행 | LangGraph와 지속 체크포인트 | 계획 |
 | 추론 | Colab GPU, Qwen3-4B-Instruct-2507을 첫 후보로 검토 | 파일럿 필요 |
 | 결과 평가 | Python·SQL·pytest·구조화 실행 로그 | 계획 |
@@ -80,7 +81,7 @@ flowchart LR
 
 ### 파이프라인 구성 요소와 상세 노드
 
-모식도는 업무 처리 흐름과 시험·평가 환경을 함께 보여줍니다. 아래 링크에서 각 구성 요소의 역할과 상세 계약을 확인할 수 있습니다. 이 실행 구성 요소들은 현재 설계 단계입니다.
+모식도는 업무 처리 흐름과 시험·평가 환경을 함께 보여줍니다. 초기 적재·DB 재개·입력 이력·범위 제한 읽기·시간별 입력 사건은 구현됐습니다. Agent 노드·업무 Tool·실제 장애 주입·결과 채점은 설계 단계입니다. 아래 링크에서 상세 계약을 확인할 수 있습니다.
 
 | 모식도 구성 요소 | 역할 | 상세 노드·계약 |
 |---|---|---|
@@ -88,7 +89,7 @@ flowchart LR
 | Agent 하네스 (`H`) | 지속 상태·증거·실행 예산을 관리하고 세션 중단 후 작업을 복구합니다. | [상태 복원 N-02](../docs/small-nodes/N-02.md) · [복구 N-12](../docs/small-nodes/N-12.md) · [지속 상태 계약](../docs/contracts/persistence-and-recovery.md) |
 | 모델 (`M`) | 허용된 조사 계획을 제안하고, 근거에 따라 재처리·대기·이관 중 조치를 제안합니다. | [조사 계획 N-04](../docs/small-nodes/N-04.md) · [조치 제안 N-08](../docs/small-nodes/N-08.md) |
 | 업무 도구 (`T`) | 6개 업무 기능을 제공하며 인자·조회 범위·승인·입력 버전을 검사합니다. | [TOOL-01~06](../docs/tools/README.md) · [호출·승인 내부 서비스](../docs/tools/internal-services.md) |
-| 업무 DB (`D`) | 입력 이력·승인·작업·대사 결과·완료 결정을 저장합니다. | [업무 DB·데이터 계약](../docs/contracts/business-data.md) |
+| 업무 DB (`D`) | 입력 이력을 저장하고 승인·작업·결과·완료 표를 준비합니다. 실행 서비스는 계획입니다. | [업무 DB·데이터 계약](../docs/contracts/business-data.md) · [구현된 적재 어댑터](../docs/data-adapter/README.md) |
 | 사건 컨트롤러 (`C`) | 정해진 시점에 자료 도착·정정·장애·공격을 발생시키고, Agent를 재시작하며 실제 발생 기록을 남깁니다. | [시험 준비 N-16](../docs/small-nodes/N-16.md) · [사건 실행 N-17](../docs/small-nodes/N-17.md) |
 | 독립 평가기 (`E`) | 실행 기록·실제 DB 반영 결과를 정답 명세와 대조하고, 업무 결과·안전 위반·비용을 집계합니다. | [독립 판정 N-19](../docs/small-nodes/N-19.md) · [판정과 지표](../docs/evaluation/grading-and-metrics.md) |
 | 평가기 전용 정답 명세 (`G`) | 시점별 기대 조치·복구 의무·금지 효과를 정의하고 Agent 접근에서 분리합니다. | [QA 시나리오 명세](../docs/evaluation/scenario-catalog.md) · [정답 파일 구조](../docs/data-generation/schemas.md) |

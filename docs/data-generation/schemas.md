@@ -141,4 +141,4 @@ CSV 헤더 순서도 고정한다. 내부는 위 공통 8개 필드 순서이며
 
 외부 `transaction_id`에 내부 행을 가리키는 FK를 강제하지 않는다. 알 수 없는 ID·중복 외부 기록 자체가 검증해야 할 입력이기 때문이다. 대신 외부 행 ID·사례/배치 FK·금액·버전·SQLite 무결성을 검사한다. 여러 사례에서 같은 `TX000001`이 존재할 수 있으므로 join에는 반드시 case_id도 포함한다.
 
-이 DB는 [계획된 업무 DB](../contracts/business-data.md)의 `operations`, `approvals`, `results`, `completion_records` 등을 구현한 것이 아니다. Agent가 전 사례를 읽는 DB 도구로 직접 연결하지 않는다.
+이 DB는 [계획된 업무 DB](../contracts/business-data.md)의 `operations`, `approvals`, `results`, `completion_records` 등을 구현한 것이 아니다. Agent가 전 사례를 읽는 DB 도구로 직접 연결하지 않는다. 실행 환경 연결은 현재 구현된 [업무 DB 적재 어댑터](../data-adapter/README.md)를 사용한다.

@@ -8,9 +8,9 @@
 
 > A harness engineering project for financial reconciliation agents that recover from interrupted execution, verify business outcomes, and handle malicious external instructions within explicit permission boundaries.
 
-**Project status:** In development. The v1 synthetic generator, independent SQL validator, temporal snapshots, normal/attack pairs, HTML preview, and operator-only SQLite export are implemented. The agent, business service, recovery runtime, security controls, and end-to-end evaluation are planned. No agent performance results have been established.
+**Project status:** In development. Synthetic data generation and inspection, a versioned business-DB import adapter, explicit trial resume, scoped read-only storage, and atomic arrival/correction events are implemented. The six business Tool handlers, agent, approval/reprocessing services, process-recovery harness, security controls, and outcome evaluation remain planned. No agent performance results have been established.
 
-**Available now:** [Synthetic data v1: one-command setup and usage guide →](docs/data-generation/README.en.md) · [Six-case teaching starter](examples/synthetic_data_starter/README.en.md)
+**Available now:** [Synthetic data v1: one-command setup and usage guide →](docs/data-generation/README.en.md) · [Six-case teaching starter](examples/synthetic_data_starter/README.en.md) · [Business-DB adapter: prepare, inspect, resume (한국어)](docs/data-adapter/README.md)
 
 **Engineering docs (한국어):** [Overall plan](docs/README.md) · [Big Nodes](docs/big-nodes/README.md) · [Small Nodes](docs/small-nodes/README.md) · [Tool contracts](docs/tools/README.md)
 
@@ -53,7 +53,8 @@ A completion message does not establish that the intended batch was processed co
 |---|---|---|
 | Synthetic data | Python standard library, fixed seeds, temporal events, paired security fixtures | Implemented |
 | Data validation and inspection | Independent SQLite matching, HTML preview, operator-only DB export | Implemented |
-| Business service | Python, Pydantic, FastAPI, SQLite | Planned |
+| Trial storage and input events | Python sqlite3, versioned import, as-of history, role-separated stores | Implemented; [guide (한국어)](docs/data-adapter/README.md) |
+| Business service | Six Tool handlers, approval and reprocessing; planned Python/Pydantic/FastAPI adapters | Planned |
 | Persistent execution | LangGraph with persistent checkpoints | Planned |
 | Inference | Colab GPU; Qwen3-4B-Instruct-2507 as an initial candidate | Pilot required |
 | Outcome evaluation | Python, SQL, pytest, structured execution logs | Planned |
@@ -80,7 +81,7 @@ flowchart LR
 
 ### Pipeline components and detailed nodes
 
-The diagram combines the business workflow with the test and evaluation environment. The links below explain each component's planned responsibilities and contracts; these runtime components are not yet implemented. Detailed design documents are currently in Korean.
+The diagram combines the business workflow with the test and evaluation environment. Trial import/resume, business input storage, scoped reads, and temporal input events are implemented; agent nodes, business Tool handlers, fault injection, and outcome grading remain design specifications. Detailed engineering documents are currently in Korean.
 
 | Diagram component | Role | Detailed nodes and contracts |
 |---|---|---|
@@ -88,7 +89,7 @@ The diagram combines the business workflow with the test and evaluation environm
 | Agent harness (`H`) | Manage persistent state, evidence, execution budgets, and recovery across sessions. | [State restoration · N-02](docs/small-nodes/N-02.md) · [Recovery · N-12](docs/small-nodes/N-12.md) · [Persistence contract](docs/contracts/persistence-and-recovery.md) |
 | Model (`M`) | Propose a bounded investigation plan and an evidence-backed action: reprocess, wait, or escalate. | [Investigation planning · N-04](docs/small-nodes/N-04.md) · [Action proposal · N-08](docs/small-nodes/N-08.md) |
 | Business tools (`T`) | Provide six business functions with argument, scope, approval, and input-version checks. | [TOOL-01–06](docs/tools/README.md) · [Dispatch and approval services](docs/tools/internal-services.md) |
-| Business database (`D`) | Persist input history, approvals, operations, reconciliation results, and completion decisions. | [Business data contract](docs/contracts/business-data.md) |
+| Business database (`D`) | Persist input history and prepare approval/operation/result tables; business execution services are planned. | [Business data contract](docs/contracts/business-data.md) · [Implemented adapter](docs/data-adapter/README.md) |
 | Scenario controller (`C`) | Run timed arrivals and corrections, inject faults and attacks, restart the agent, and record what actually occurred. | [Trial setup · N-16](docs/small-nodes/N-16.md) · [Scenario execution · N-17](docs/small-nodes/N-17.md) |
 | Independent evaluator (`E`) | Compare execution traces and actual database effects against the expected specification; aggregate outcomes, safety violations, and costs. | [Grading · N-19](docs/small-nodes/N-19.md) · [Metrics](docs/evaluation/grading-and-metrics.md) |
 | Evaluator-only specification (`G`) | Define expected actions at each checkpoint, recovery obligations, and forbidden effects; keep them outside agent access. | [QA scenario specification](docs/evaluation/scenario-catalog.md) · [Expected-answer files](docs/data-generation/schemas.md) |

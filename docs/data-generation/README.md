@@ -109,4 +109,4 @@ CLI의 `--rows`, `--seed`, `--profile`, `--decision-at`, `--security-pairs`는 J
 | [사건·보안 쌍 카탈로그](scenarios.md) | 업무 18종, 보안 6계열, 네 핵심 기능과의 연결 |
 | [검증·테스트·한계](validation.md) | 잘못된 데이터/정답을 잡는 검사, 실행 결과, 남은 일 |
 
-다음 구현은 이 데이터를 공통 업무 서비스로 적재하는 **버전 지정 어댑터**, R0, TOOL-01/02다. 승인·멱등 실행·실제 장애·재개·보안 통제는 이후 단계이며 [전체 구현 순서](../overall-plan/implementation-plan.md)에서 관리한다.
+[버전 지정 업무 DB 적재 어댑터](../data-adapter/README.md)는 초기 적재·DB 상태 재개·시점별 읽기·입력 사건 적용까지 구현됐다. 다음은 R0·TOOL-01/02·독립 결과 검사기이며, 승인·멱등 실행·실제 Agent 중단/재개·보안 통제는 이후 단계다. [전체 구현 순서](../overall-plan/implementation-plan.md)에서 관리한다.

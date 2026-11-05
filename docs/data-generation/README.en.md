@@ -58,6 +58,10 @@ Commands: `build` (generate, validate, HTML, SQLite), `generate` (core files onl
 - `benchmark` contains evaluation candidates, not a frozen blind benchmark. Core mechanisms overlap across splits; semantic combinations and security families are grouped explicitly. Numeric/wording variants and repeated trials are not independent scenarios.
 - Temporal snapshot reconstruction does not execute faults, approvals, agent actions, or defenses. A reference `REPROCESS` decision is not a completed operation. All runtime evaluation statuses remain `NOT_EXECUTED`.
 
+## Next: import into business storage
+
+The [business-DB adapter (한국어)](../data-adapter/README.md) now supports isolated trial preparation, explicit resume without reimport, scoped as-of reads, and atomic arrival/correction events. Six business Tool handlers, approval/reprocessing services, agent recovery, security controls, and runtime outcome grading are still planned.
+
 ## Detailed specifications
 
 The following engineering references are currently in Korean, with stable field/API names in English:

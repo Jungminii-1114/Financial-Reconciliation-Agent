@@ -30,4 +30,16 @@
 | 평가 규모 | 핵심 216 LLM 실행 + 보안 240, R0 24 별도 | 비용·동결 사례의 독립성·중복 |
 | MCP·추가 모델·Jev | P2 | 핵심 구현 완료와 보조 평가 실효성 |
 
-문서 변경 때 `변경일 / 사유 / 영향 계약 / QA 영향 / 구현 증거`를 이 파일에 추가한다. 현재는 v0.1 설계 작성만 완료한 상태다.
+문서 변경 때 `변경일 / 사유 / 영향 계약 / QA 영향 / 구현 증거`를 이 파일에 추가한다. 기본 업무/Agent 계약은 v0.1 설계이며, 아래 저장소 결정은 실제 코드로 구현됐다.
+
+
+## 2026-11-05 · 업무 저장소 schema 1 구현
+
+| ID | 채택 결정 | 사유·영향 계약·QA | 구현 증거 |
+|---|---|---|---|
+| D-15 | 새 trial과 resume API 분리, READY 마지막 발행 | 초기 입력 재적재로 기존 효과를 지우지 않음. business-data, N-16, IMP-10~12 | [lifecycle.py](../../src/reconcile_agent/trials/lifecycle.py), 실제 발행 중 종료·재개 검사 |
+| D-16 | canonical 10표 + 보조 6표, content는 업무 DB 보관 | 정책·배치 상태·원문 출처·영수증 보존. content 파일과 DB 사이의 초기 불일치 감소 | [schema.sql](../../src/reconcile_agent/business/schema.sql), [설계](../data-adapter/design.md) |
+| D-17 | UTC 고정 자리·입력 사건과 시계의 같은 commit | 과거 revision 보존, 중간 실패 원자성. evidence-and-time, N-17, IMP-13/14 | [events.py](../../src/reconcile_agent/trials/events.py), 정정·재전달·동시 전달 검사 |
+| D-18 | business-input-v1/action-v1, 읽기 scope binding | 열람용 digest와 승인용 식별값 구분, 정답/미래 데이터 비노출 | [input_digest.py](../../src/reconcile_agent/business/input_digest.py), [repository.py](../../src/reconcile_agent/business/repository.py) |
+
+인증 서버·6개 Tool·승인/재처리 서비스·Agent 하네스·N-19는 이 변경의 완료 범위가 아니다. 다음 우선순위는 Tool 1/2·R0·최소 결과 평가에서 승인/실행·실제 복구로 이어지는 수직 경로다.

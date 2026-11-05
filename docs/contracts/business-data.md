@@ -1,12 +1,12 @@
 # 업무 데이터·DB 계약
 
-> v0.1 설계. [기존 예제](../../examples/synthetic_data_starter/README.md) · [상태 타입](state-and-types.md) · [복구](persistence-and-recovery.md)
+> 업무 서비스 계약 v0.1 / 저장소 schema 1 구현. [적재 어댑터](../data-adapter/README.md) · [기존 예제](../../examples/synthetic_data_starter/README.md) · [상태 타입](state-and-types.md) · [복구](persistence-and-recovery.md)
 
-**2026-11-05 구현 연결:** [자체 합성기 v1 스키마](../data-generation/schemas.md)는 내부/외부 모두 known_at·row_revision을 제공하며 시간 이벤트를 재구성한다. 출력하는 SQLite 6개 테이블은 **열람용 입력 스냅샷**이고, 이 문서의 승인·작업·결과 DB 및 `load_teaching_fixture`/v1 적재 어댑터는 아직 계획이다. 아래 기존 파일 변환 표는 이전 교육용 형식에 해당한다. v1은 schema_version을 검사하는 별도 어댑터로 연결하고 열람용 digest를 업무 승인 digest로 재사용하지 않는다.
+**2026-11-05 구현 연결:** [자체 합성기 v1 스키마](../data-generation/schemas.md)는 내부/외부 모두 known_at·row_revision을 제공한다. 합성기 SQLite 6개 표는 **열람용 입력 스냅샷**이다. 별도 [업무 DB 적재 어댑터](../data-adapter/README.md)가 아래 10개 표와 보조 표를 준비하고, 초기 적재·역검사·명시적 재개·시점별 읽기·입력 사건을 구현했다. 승인·재처리·완료 서비스는 아직 없다. 이전 교육용 형식의 `load_teaching_fixture`는 미구현이며 v1은 버전을 검사해 별도로 처리한다. 열람용 digest는 업무 승인 digest로 재사용하지 않는다.
 
 ## 1. 기존 파일을 실행 환경으로 옮기는 어댑터
 
-`load_teaching_fixture(path) -> FixtureImport`를 코드로 구현한다. `agent_view`만 업무 DB의 초기 입력으로 적재하고, controller/evaluator 파일은 각각 별도 저장소로 보낸다. Agent의 파일 루트를 전체 fixture 폴더로 설정하지 않는다.
+현재 `prepare_trial(dataset_root, case_id, trial_id, output_dir, config)`가 v1을 지원한다. `agent_view`만 업무 DB의 초기 입력으로 적재하고, controller/evaluator 파일은 각각 별도 저장소로 보낸다. Agent의 파일 루트를 전체 fixture 폴더로 설정하지 않는다. 아래 표는 이전 교육용 형식의 후속 변환 설계이며 현재 구현과 혼동하지 않는다.
 
 | 현재 필드 | 실행 환경의 의미·변환 |
 |---|---|
@@ -22,7 +22,7 @@
 
 ## 2. 업무 DB 테이블
 
-표의 이름·제약이 설계 정본이다. 실제 마이그레이션 코드는 아직 없다. 실험 trial마다 별도 업무 SQLite 파일로 초기화하고, 복구 세션에서는 같은 파일을 계속 사용한다.
+표의 이름·제약과 [schema 1 DDL](../../src/reconcile_agent/business/schema.sql)이 저장소 정본이다. 새 실험마다 별도 업무 SQLite 파일을 만들고, 복구 세션에서는 같은 파일을 계속 사용한다. DDL이 존재한다고 승인·실행의 서비스 프로토콜까지 구현된 것은 아니다.
 
 | 테이블 | 주요 필드 | PK·유일성·참조 |
 |---|---|---|
@@ -31,13 +31,15 @@
 | transaction_history | case_id, batch_id, transaction_id, row_revision, amount_krw, currency, status, event_time, known_at, superseded_known_at | PK(case_id,transaction_id,row_revision). 현재 버전의 거래 ID 유일 |
 | settlement_history | case_id, batch_id, external_id, transaction_id, row_revision, amount_krw, currency, status, event_time, known_at, superseded_known_at | PK(case_id,external_id,row_revision). 중복 transaction_id는 삭제하지 말고 검증 대상으로 유지 |
 | input_mutations | mutation_id, case_id, batch_id, old_version, new_version, table_name, affected_ids, changed_fields, known_at | 변경 영향 추적용. transaction 내부에서 입력과 함께 기록 |
-| external_notes | note_id, case_id, record_ref, content_ref, content_hash, context_revision, origin | 원문과 출처 보존. 메모의 trust를 자체 선언으로 승격하지 않음 |
+| external_notes | note_id, case_id, record_ref, content_ref, content_hash, context_revision, origin, known_at | PK(case_id,note_id,context_revision). 원문과 출처 보존. 메모의 trust를 자체 선언으로 승격하지 않음 |
 | approvals | approval_id, case_id, batch_id, input_version, input_digest, action_digest, policy_version, granted_by, expires_at, status, consumed_by | PK approval_id. 한 승인은 한 논리 작업만 소비 |
 | operations | operation_id, idempotency_key, case_id, batch_id, input_version, action_kind, action_digest, approval_id, state, result_ref, committed_at | PK operation_id, UNIQUE idempotency_key, UNIQUE(case_id,batch_id,input_version,action_kind) |
 | reconciliation_results | result_id, operation_id, transaction_id, internal_ref, external_ref, amount_krw, match_status | PK(result_id,transaction_id), operation 참조 |
 | completion_decisions | decision_id, logical_run_id, case_id, batch_id, outcome, decision_at, input_version, operation_id, verification_digest, report_facts | PK decision_id, UNIQUE logical_run_id. 조건부 검사 후 기록, 입력 변경과 같은 직렬화 경계 사용 |
 
 batch의 작업 진행 상태는 입력 버전과 분리한다. 대사 결과가 생성됐다는 이유만으로 input_version을 증가시켜 자기 작업의 승인을 낡게 만들지 않는다.
+
+schema 1에서는 `case_policies`, `batch_runtime`, `import_receipts`, `content_objects`, `trial_metadata`, `applied_event_groups` 보조 표를 채택해 총 16개 표를 사용한다. 원문을 같은 DB에 보관하고 권위 있는 가상 시각을 입력 사건과 함께 commit한다. 정확한 책임·채택 이유는 [적재 설계](../data-adapter/design.md)를 따른다. controller/evaluator는 별도 metadata/documents DB이며 runtime 연결에 ATTACH하지 않는다.
 
 ## 3. Agent 상태 저장소
 
@@ -56,6 +58,7 @@ LangGraph 체크포인트가 업무 DB와 원자적으로 저장된다고 가정
 
 - amount_krw는 양의 정수, currency는 KRW. float·암묵적 환율·소수점 반올림 금지.
 - 시간은 offset이 포함된 ISO 8601 문자열로 직렬화하고, 내부 비교는 timezone-aware datetime으로 한다. 모든 예시의 KST를 UTC라고 가정하지 않는다.
+- schema 1의 DB 시각과 조회 바인딩은 UTC·고정 microsecond 자리로 정규화한다. 원본 바이트는 operator 자료로 별도 보존한다.
 - 소급 정정은 이전 행을 지우지 않고 새 revision과 known_at을 만든다. 과거 as-of에서는 당시 revision이 조회돼야 한다.
 - 알려진 입력 행·재무 필드·도착 완결성의 변화가 input_version과 input_digest를 바꾼다. 메모만 바뀌면 context_revision/content_hash를 갱신한다. 메모는 쓰기 권한의 근거가 될 수 없다.
 - 기존 case_002의 같은 시각 insert+complete_ingestion은 하나의 도착 묶음으로 적용하고 명세의 new_input_version=2를 한 번 부여한다. 이벤트마다 임의로 두 번 증가시키지 않는다.

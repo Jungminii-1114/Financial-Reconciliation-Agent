@@ -57,6 +57,8 @@ python3.11 scripts/dataset.py build --config configs/synthetic-benchmark.json --
 | 두 프로필의 모델 호출 | 0회 |
 | 실제 Agent·재처리·장애·방어 실행 | 미실행 |
 
+위 39개는 합성기 검사의 수다. 현재 전체 테스트에는 [어댑터 검사](../data-adapter/validation.md)도 포함된다.
+
 테스트 코드: [생성·시간](../../tests/test_generation.py), [의미 검증](../../tests/test_validation.py), [SQLite·HTML](../../tests/test_operator.py), [CLI](../../tests/test_cli.py). 작은 3행 사례로 여러 오류를 검사하고, 기본 100행 설정은 CLI로 별도 생성·검사한다. 수천만 건 규모 성능이나 Colab 환경의 실행을 검증한 것은 아니다.
 
 생성물의 실제 hash·행 수·시점 수는 각 실행의 `manifest.json`과 `operator_view/validation_report.json`에서 확인한다. 코어 코드가 바뀌면 소스 hash가 바뀌므로 이 문서에 영구 지문을 고정하지 않는다.
@@ -72,7 +74,7 @@ python3.11 scripts/dataset.py build --config configs/synthetic-benchmark.json --
 ## 6. 다음 준비 사항
 
 1. 개발 pilot의 거래·시각·정답 카드를 사람이 확인하고 모의 업무 규칙을 확정한다.
-2. 이 버전을 읽는 어댑터와 공통 업무 DB·TOOL-01/02·R0를 만든다.
+2. 이 버전의 [업무 DB 적재·재개·입력 사건 어댑터](../data-adapter/README.md)는 구현됐다. 다음으로 TOOL-01/02와 R0를 연결한다.
 3. 현재 파일 검사기와 별도로 실제 operation/result/approval을 읽는 결과 평가기를 만든다.
 4. 실제 반영 전/후 중단·새 세션 재개·권한/승인/버전/중복 보호를 시험한다.
 5. 정상/공격 조건의 위반 시도·서버 차단·실제 효과·정상 업무 유지율을 분리 집계한다.

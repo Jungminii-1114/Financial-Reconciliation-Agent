@@ -1,0 +1,84 @@
+{
+  "adapter_code_fingerprint": "sha256:adf7801e1c01c4e6d723a1efde5bcc04693af5b4a5077d9a711c51de48dab61e",
+  "adapter_source_sha256": {
+    "scripts/trial.py": "7f8039a1048fe057f1f8a22e1d71fd24b35b28e2ba61e2a5598a6677870501d4",
+    "src/reconcile_agent/business/__init__.py": "8bee0cf5454302f65375fd34d63c696d881b6a223fd980bc167b4ef50b5bdb61",
+    "src/reconcile_agent/business/connection.py": "f12db2827cbec93fce3b362dc347875ef894c0f6bd2b4bc6cc04948097ec7b7d",
+    "src/reconcile_agent/business/errors.py": "ac01ff8d302965a5d44623f78a59504d4cfc63dd762bfd797159623b7099068b",
+    "src/reconcile_agent/business/input_digest.py": "d7f62682ab102729deb2118350e7950ddcdd30e566f284ba0005b8051928c4af",
+    "src/reconcile_agent/business/repository.py": "1e963b1616ee1c30df8259506d974ec2a2bc18a9ef08667958d379884c6ff3b7",
+    "src/reconcile_agent/business/schema.sql": "ac4730456d7e83d5ed51dd3c1ea70e8e5ca08cb1318d66eef8c65debede1a281",
+    "src/reconcile_agent/trials/__init__.py": "2154708c99cc0d2160325cbef113526c621086fd17ac74a4d21272be5f9c4c88",
+    "src/reconcile_agent/trials/cli.py": "2d864d68a5169f4adf8e2b38238038ad5fc7e01c81e80d0442aebea2c9ce3cb9",
+    "src/reconcile_agent/trials/contracts.py": "011e8792718cbc6bc72e1c7028d973b75bde6641a434717097bd89c86bc1ee77",
+    "src/reconcile_agent/trials/events.py": "090deb8a8723e2830683948f0a32a9c6120cbabdd3538b8446b9d8a68f97c45b",
+    "src/reconcile_agent/trials/import_check.py": "0c3a0897fcc48f3743c7c9f323a387cd854a757d3ac9a3636407c8f2be55ea15",
+    "src/reconcile_agent/trials/lifecycle.py": "a13511ba125caa120ae52e4b03401ddc40db560681645803b27ca400a210a16d",
+    "src/reconcile_agent/trials/source.py": "301248a3e448f0e7c106f81bb9e3b95aa3b25644876ba1ef1142af2e11d92d41",
+    "tests/test_trial_cli.py": "66ff7945137d3e27ed9f651e37087f30b32c8ca60037eea9590984a8e3c60259",
+    "tests/test_trial_events.py": "e8ce76a8484727004fd16408fb7cbcba8cdaeb05f6cfe2a0db1b5ce762e7dad0",
+    "tests/test_trial_import.py": "8422a91fc0f25f80fef880d9fba285a2364e15e9fcbb86a06dd3743ccb49654c"
+  },
+  "agent_runtime_executed": false,
+  "base_commit": "00740ba942bfd2cb3f10aedc856d3209ce70912b",
+  "business_reprocessing_service_executed": false,
+  "default_profiles": [
+    {
+      "execution_tables_empty": true,
+      "initial_rows": {
+        "external": 999,
+        "internal": 1000
+      },
+      "output_path": "generated_data/trials_pilot_v1",
+      "prepared_trials": 10,
+      "resumed_and_read_back_trials": 10,
+      "rows_per_batch": 100,
+      "source_dataset": "pilot_v1",
+      "source_dataset_fingerprint": "633bb61c30ccfd7ff14b330adf218261e9b3f67c0391d51efab735fd8506d2a0"
+    },
+    {
+      "execution_tables_empty": true,
+      "initial_rows": {
+        "external": 9797,
+        "internal": 9800
+      },
+      "output_path": "generated_data/trials_benchmark_candidate_v1",
+      "prepared_trials": 98,
+      "resumed_and_read_back_trials": 98,
+      "rows_per_batch": 100,
+      "source_dataset": "benchmark_candidate_v1",
+      "source_dataset_fingerprint": "0d375f8860e046dc1ad1c164b8aa75b6e2a37f88d84e86feb08fa04827690b54"
+    }
+  ],
+  "delayed_arrival_demo": {
+    "agent_runtime_executed": false,
+    "case_id": "c_2e8b6b7c4702",
+    "current_external_rows": 100,
+    "current_version": 2,
+    "initial_external_rows": 99,
+    "model_requests": 0,
+    "past_external_rows": 99,
+    "replayed_group_ids": [
+      "G001"
+    ]
+  },
+  "implementation_state": "Verification captured before publication; exact source is identified by adapter_source_sha256.",
+  "model_requests": 0,
+  "prompt_injection_defense_executed": false,
+  "python_version": "3.11.14",
+  "sqlite_version": "3.53.0",
+  "tiny_fixture_matrix": {
+    "all_matched": true,
+    "asof_checkpoints": 107,
+    "conditions": 98,
+    "rows_per_batch": 3,
+    "test": "tests/test_trial_events.py::EventTests.test_all_benchmark_cases_and_past_checkpoints_round_trip"
+  },
+  "unit_tests": {
+    "command": "python3.11 -m unittest discover -s tests",
+    "elapsed_seconds": 21.595,
+    "passed": true,
+    "tests": 83
+  },
+  "verified_on": "2026-11-05"
+}

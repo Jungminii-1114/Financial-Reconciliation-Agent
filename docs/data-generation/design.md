@@ -91,4 +91,4 @@
 | [operator.py](../../src/reconcile_agent/synthetic/operator.py) | 외부 메모를 escape한 정적 HTML |
 | [cli.py](../../src/reconcile_agent/synthetic/cli.py) · [entrypoint](../../scripts/dataset.py) | 한 명령 실행·사람용 조회·오류 처리 |
 
-현재 **구현**: 합성·시점 재구성·독립 입력 검증·열람 파일. 현재 **계획**: 업무 DB 적재 어댑터, 6개 Tool, R0, Agent, 승인 시뮬레이터, 실제 장애 주입, 출처 기반 방어, 실제 결과 채점기. 폴더 격리는 runtime 권한 통제가 아니며, 보안 쌍을 생성했다는 이유로 방어 성공을 주장하지 않는다.
+현재 **구현**: 합성·시점 재구성·독립 입력 검증·열람 파일. [업무 DB 적재 어댑터](../data-adapter/README.md)의 초기 적재·DB 재개·시점별 읽기·입력 사건도 구현됐다. 현재 **계획**: 6개 업무 Tool, R0, Agent, 승인 시뮬레이터, 실제 장애 주입, 출처 기반 방어, 실제 결과 채점기. 폴더 격리는 runtime 권한 통제가 아니며, 보안 쌍을 생성했다는 이유로 방어 성공을 주장하지 않는다.
