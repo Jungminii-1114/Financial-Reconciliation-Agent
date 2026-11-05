@@ -12,6 +12,8 @@
 
 **Available now:** [Synthetic data starter and usage guide →](examples/synthetic_data_starter/README.en.md)
 
+**Engineering docs (한국어):** [Overall plan](docs/README.md) · [Big Nodes](docs/big-nodes/README.md) · [Small Nodes](docs/small-nodes/README.md) · [Tool contracts](docs/tools/README.md)
+
 ## Overview
 
 Financial reconciliation checks whether records held by different systems agree. This project models a financial IT operations task: compare internal transactions with external settlement records, investigate exceptions, and propose **reprocessing, waiting, or escalation**.

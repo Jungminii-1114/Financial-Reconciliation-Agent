@@ -12,6 +12,8 @@
 
 **지금 실행할 수 있는 예제:** [합성 데이터 생성·검사 사용 설명서 →](../examples/synthetic_data_starter/README.md)
 
+**상세 설계 문서:** [Overall Plan](../docs/README.md) · [Big Node](../docs/big-nodes/README.md) · [Small Node](../docs/small-nodes/README.md) · [Tool 명세](../docs/tools/README.md)
+
 ## Overview
 
 **대사(Reconciliation)**는 서로 다른 시스템에 기록된 거래 내역을 대조하는 작업입니다. 이 프로젝트는 모의 금융 IT 운영 담당자를 위해 내부 거래와 외부 정산 기록을 조사하고 **재처리·대기·담당자 이관** 중 적절한 조치를 제안합니다.
