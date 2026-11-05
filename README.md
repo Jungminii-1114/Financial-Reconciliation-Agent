@@ -78,6 +78,25 @@ flowchart LR
     G["Evaluator-only specification"] --> E
 ```
 
+### Pipeline components and detailed nodes
+
+The diagram combines the business workflow with the test and evaluation environment. The links below explain each component's planned responsibilities and contracts; these runtime components are not yet implemented. Detailed design documents are currently in Korean.
+
+| Diagram component | Role | Detailed nodes and contracts |
+|---|---|---|
+| Korean request (`U`) | Accept a case, check the caller's scope, and build the investigation context. | [Case admission · N-01](docs/small-nodes/N-01.md) · [Context · N-03](docs/small-nodes/N-03.md) |
+| Agent harness (`H`) | Manage persistent state, evidence, execution budgets, and recovery across sessions. | [State restoration · N-02](docs/small-nodes/N-02.md) · [Recovery · N-12](docs/small-nodes/N-12.md) · [Persistence contract](docs/contracts/persistence-and-recovery.md) |
+| Model (`M`) | Propose a bounded investigation plan and an evidence-backed action: reprocess, wait, or escalate. | [Investigation planning · N-04](docs/small-nodes/N-04.md) · [Action proposal · N-08](docs/small-nodes/N-08.md) |
+| Business tools (`T`) | Provide six business functions with argument, scope, approval, and input-version checks. | [TOOL-01–06](docs/tools/README.md) · [Dispatch and approval services](docs/tools/internal-services.md) |
+| Business database (`D`) | Persist input history, approvals, operations, reconciliation results, and completion decisions. | [Business data contract](docs/contracts/business-data.md) |
+| Scenario controller (`C`) | Run timed arrivals and corrections, inject faults and attacks, restart the agent, and record what actually occurred. | [Trial setup · N-16](docs/small-nodes/N-16.md) · [Scenario execution · N-17](docs/small-nodes/N-17.md) |
+| Independent evaluator (`E`) | Compare execution traces and actual database effects against the expected specification; aggregate outcomes, safety violations, and costs. | [Grading · N-19](docs/small-nodes/N-19.md) · [Metrics](docs/evaluation/grading-and-metrics.md) |
+| Evaluator-only specification (`G`) | Define expected actions at each checkpoint, recovery obligations, and forbidden effects; keep them outside agent access. | [QA scenario specification](docs/evaluation/scenario-catalog.md) · [Expected-answer files](docs/data-generation/schemas.md) |
+
+**Business stages:** [B-01 · Intake and restore](docs/big-nodes/B-01.md) → [B-02 · Investigation](docs/big-nodes/B-02.md) → [B-03 · Decision and approval](docs/big-nodes/B-03.md) → [B-04 · Execution and recovery](docs/big-nodes/B-04.md) → [B-05 · Verification and delivery](docs/big-nodes/B-05.md). Waiting and escalation skip B-04; recovery or changed inputs can return execution to an earlier stage. [B-06 · Scenario replay and evaluation](docs/big-nodes/B-06.md) manages the separate evaluation workflow.
+
+### Harness mechanisms
+
 | Mechanism | Design | Question to test |
 |---|---|---|
 | Selective revalidation, including absence evidence | Track query predicates, result sets, and decision dependencies, including empty results. | Can change detection remain accurate while reducing unnecessary reinspection? |
