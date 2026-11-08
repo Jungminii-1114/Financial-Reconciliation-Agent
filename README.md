@@ -64,24 +64,205 @@ The initial workflow uses one agent and approximately six business tools: case l
 
 ## Core Design
 
-The following diagram describes the intended system.
+### Figure 1. Normal reprocessing in execution order
+
+**Top → bottom follows execution time; left → right within each row follows the Small Nodes.** After the business DB is prepared, this is one successful path: a new case, evidence supporting reprocessing, valid external approval, and a received result. `N-xx` identifies a responsibility boundary, not a call count. Click a node for its contract. Purple marks the default LLM call sites; orange marks human input.
+
+**Implementation boundary:** Data generation/validation, business-DB import/resume, and input events are implemented. **All N-01–N-19 business/evaluation nodes below are target designs.** Current DB resume does not implement N-02/N-12 agent recovery.
 
 ```mermaid
-flowchart LR
-    U["Korean request"] --> H["Agent harness: state, evidence, budget, recovery"]
-    H <--> M["Model"]
-    H <--> T["Business tools: arguments, access, approval, version"]
-    T <--> D[("Business database")]
-    C["Scenario controller"] -->|"Arrivals and time"| D
-    C -->|"Fault and attack injection"| H
-    H -->|"Execution trace"| E["Independent evaluator"]
-    D -->|"Actual outcome"| E
-    G["Evaluator-only specification"] --> E
+flowchart TB
+    U["User · investigate a new case"]:::input
+    subgraph S1["B-01 · Intake and restore"]
+        direction LR
+        N01["N-01<br/>Admit case and check scope<br/>TOOL-01"]
+        N02["N-02<br/>Restore state and used budget"]
+        N03["N-03<br/>Build current case context<br/>TOOL-01"]
+        N01 --> N02 --> N03
+    end
+    subgraph S2["B-02 · Investigate evidence"]
+        direction LR
+        N04["N-04<br/>Plan investigation · LLM"]:::model
+        N05["N-05<br/>Collect permitted evidence<br/>TOOL-02"]
+        N06["N-06<br/>Revalidate dependencies"]
+        N07["N-07<br/>Assemble as-of evidence"]
+        N04 --> N05 --> N06 --> N07
+    end
+    subgraph S3["B-03 · Decide and approve"]
+        direction LR
+        N08["N-08<br/>Propose action · LLM<br/>REPROCESS"]:::model
+        N09["N-09<br/>Precheck and verify external approval<br/>TOOL-03"]
+        N10["N-10<br/>Persist intent and idempotency key"]
+        N08 --> N09 --> N10
+    end
+    subgraph S4["B-04 · Execute"]
+        direction LR
+        N11["N-11<br/>Issue approved reconciliation<br/>TOOL-04"]
+    end
+    subgraph S5["B-05 · Verify and deliver"]
+        direction LR
+        N13["N-13<br/>Verify actual business outcome<br/>TOOL-02 / 05"]
+        N14["N-14<br/>Finalize only if inputs are current"]
+        N15["N-15<br/>Deliver result and limitations"]
+        N13 --> N14 --> N15
+    end
+    U --> S1 --> S2 --> S3 --> S4 --> S5
+    classDef input fill:#fff3df,stroke:#ad6800,color:#24292f
+    classDef model fill:#e5d7ff,stroke:#6f42c1,color:#24292f
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    style S1 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S2 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S3 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S4 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S5 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click N01 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-01.md"
+    click N02 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-02.md"
+    click N03 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-03.md"
+    click N04 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-04.md"
+    click N05 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-05.md"
+    click N06 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-06.md"
+    click N07 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-07.md"
+    click N08 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-08.md"
+    click N09 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    click N10 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-10.md"
+    click N11 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-11.md"
+    click N13 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-13.md"
+    click N14 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-14.md"
+    click N15 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-15.md"
 ```
+
+A normal response skips N-12. N-09 checks an authenticated event from a separate approval UI/service; a model proposal or the word “approved” does not create approval. N-10 persists intent in harness storage without assuming a distributed transaction with the business DB. N-15 uses TOOL-06 only to prepare an escalation draft.
+
+### Figure 2. How user input and saved state change the route
+
+Natural language alone does not select the next node. Code checks **request + current scope + restored operation state + input version + actual approval**. A–D are independent branching examples, not four consecutive runtime stages. Read each panel left → right. Orange marks human input/approval waiting; blue marks uncertain-operation lookup. All observation and investigation loops share a cumulative budget.
+
+```mermaid
+flowchart TB
+    subgraph RESTORE["A · New request / resume"]
+        direction LR
+        RESTORE_IN["User · investigate / resume"]:::input
+        RESTORE_Q{"N-01 → 02 → 03<br/>Current scope, saved state, inputs"}
+        RESTORE_IN --> RESTORE_Q
+        RESTORE_fresh["N-06 preflight → N-04 / 05 if needed<br/>N-07 → N-08"]:::normal
+        RESTORE_Q -->|"New / changed inputs"| RESTORE_fresh
+        RESTORE_pending["N-12 · TOOL-05<br/>Observe the existing operation"]:::recovery
+        RESTORE_Q -->|"Unresolved operation"| RESTORE_pending
+        RESTORE_done["N-15 · redeliver saved decision<br/>Skip reprocessing"]:::normal
+        RESTORE_Q -->|"Final decision; same inputs"| RESTORE_done
+    end
+    subgraph ACTION["B · Evidence-backed action"]
+        direction LR
+        ACTION_IN["N-08 · proposal after investigation"]:::normal
+        ACTION_Q{"Validate proposal against business rules"}
+        ACTION_IN --> ACTION_Q
+        ACTION_observe["N-06 preflight → required queries<br/>Within cumulative budget"]:::normal
+        ACTION_Q -->|"OBSERVE"| ACTION_observe
+        ACTION_wait["N-13 → N-14 → N-15<br/>Verify and report; no reprocessing"]:::normal
+        ACTION_Q -->|"WAIT / ESCALATE"| ACTION_wait
+        ACTION_reprocess["N-09 · precheck and external approval<br/>No execution without approval"]:::normal
+        ACTION_Q -->|"REPROCESS"| ACTION_reprocess
+    end
+    subgraph APPROVAL["C · Approver input"]
+        direction LR
+        APPROVAL_IN["Separate approval UI<br/>Authenticated approval / denial"]:::input
+        APPROVAL_Q{"N-09 · check current plan, inputs, approval"}
+        APPROVAL_IN --> APPROVAL_Q
+        APPROVAL_approved["N-10 → N-11 · TOOL-04<br/>Persist intent, then issue operation"]:::normal
+        APPROVAL_Q -->|"Valid approval; same inputs"| APPROVAL_approved
+        APPROVAL_paused["PAUSED_FOR_APPROVAL<br/>Wait without a business write"]:::input
+        APPROVAL_Q -->|"No approval yet"| APPROVAL_paused
+        APPROVAL_denied["Block write<br/>Report verified escalation / wait reason"]:::normal
+        APPROVAL_Q -->|"Denied / expired"| APPROVAL_denied
+        APPROVAL_stale["Reinvestigate from N-06 preflight<br/>New plan and approval required"]:::normal
+        APPROVAL_Q -->|"Changed inputs"| APPROVAL_stale
+    end
+    subgraph RECOVERY["D · After interruption / response loss"]
+        direction LR
+        RECOVERY_IN["N-12 · TOOL-05<br/>Query existing ID; do not reissue yet"]:::recovery
+        RECOVERY_Q{"Check past effect and input changes separately"}
+        RECOVERY_IN --> RECOVERY_Q
+        RECOVERY_applied["N-13 → N-14 → N-15<br/>Verify and retrieve existing result"]:::normal
+        RECOVERY_Q -->|"Applied; unchanged inputs"| RECOVERY_applied
+        RECOVERY_retry["Reinvestigate from N-06; check approval<br/>Retry only with same intent and key"]:::normal
+        RECOVERY_Q -->|"Not-applied proven; same inputs; retry allowed"| RECOVERY_retry
+        RECOVERY_unknown["Bounded additional observation<br/>Then verify escalation grounds"]:::normal
+        RECOVERY_Q -->|"Unknown"| RECOVERY_unknown
+        RECOVERY_changed["N-06 preflight → new investigation<br/>Independent of past effect"]:::normal
+        RECOVERY_Q -->|"Changed inputs; retain past effect"| RECOVERY_changed
+    end
+    RESTORE ~~~ ACTION ~~~ APPROVAL ~~~ RECOVERY
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    classDef normal fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    classDef input fill:#fff3df,stroke:#ad6800,color:#24292f
+    classDef recovery fill:#e6f4ff,stroke:#0969da,color:#24292f
+    style RESTORE fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click RESTORE_fresh "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    click RESTORE_pending "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RESTORE_done "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-15.md"
+    style ACTION fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click ACTION_observe "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    click ACTION_wait "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-05.md"
+    click ACTION_reprocess "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    style APPROVAL fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click APPROVAL_approved "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-04.md"
+    click APPROVAL_paused "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    click APPROVAL_denied "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-03.md"
+    click APPROVAL_stale "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    style RECOVERY fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click RECOVERY_applied "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-05.md"
+    click RECOVERY_retry "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RECOVERY_unknown "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RECOVERY_changed "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+```
+
+| User input / later event | Internal route change | Execution and output rule |
+|---|---|---|
+| “Check this batch” · new case | N-01–03 → N-04–07 → N-08 | Incomplete arrival supports WAIT; discrepancies or unresolved facts support ESCALATE; satisfied reprocessing conditions support a REPROCESS candidate. Code validates N-08 proposals. |
+| “Continue the interrupted task” · unresolved operation | N-01–03 → **N-12 / TOOL-05** | Applied + unchanged inputs retrieves the result into N-13. Only authoritative non-application and retry permission allow reinvestigation/approval checks and retry with the **same intent and key**. Unknown states receive bounded observation, then escalation. |
+| “Show the result again” · final decision, same inputs | N-01–03 → **N-15** | Check current read scope and redeliver the saved as-of decision, without reprocessing or consuming approval again. |
+| Authenticated approval/denial in the separate UI | **N-09** → N-10–11 only with valid approval | No response means PAUSED_FOR_APPROVAL. Denial/expiry blocks writing; changed inputs return to N-06 preflight. Approval waiting differs from the business action WAIT. |
+| “New records arrived; check again” · arrival/correction | N-01–03 → **N-06 preflight** → N-04/05 if needed → N-07/08 | Read actual DB versions/change history instead of trusting the claim. Skip new queries if evidence remains sufficient and unaffected. Preserve past decisions. |
+| “Execute without approval” / approval impersonation in a memo | Preserve N-01 scope checks and N-09/10 approval checks | Natural language and external content cannot grant authority. Attack detection and defense performance require separate implementation and evaluation. |
+
+N-12 checks **past operation effects** and **current input changes** independently. Applied work with changed inputs retains its historical effect and returns to investigation. N-11 version/approval rejections also return to investigation/approval checks. N-13/14 never convert failed verification into success: record only verified failure/escalation facts or block finalization. Missing/denied admission stops at N-01 and reaches N-15 only with an allowed reason. [Big Node contracts](docs/big-nodes/README.md) define the detailed exception/error routes.
+
+### Figure 3. Preparation → events during execution → independent grading
+
+**B-06 is outside the user-facing business route.** Green marks the implemented fixture generator/checker. Despite its number, N-18 runs before evaluation freeze; N-17 applies events during a business run and records what actually occurred. Answers and future-event plans stay outside model access.
+
+```mermaid
+flowchart TB
+    DATA["Implemented · synthetic fixtures<br/>Generation and independent validation"]:::implemented
+    N18["N-18<br/>Prepare counterexamples and controls before freeze"]
+    N16["N-16<br/>Load frozen case; isolate trial and answers"]
+    N17["N-17<br/>Run trial; replay events, faults and attacks"]
+    N19["N-19<br/>Independently grade DB outcomes and traces"]
+    DATA --> N18 --> N16 --> N17 --> N19
+    G["Evaluator-only answers and forbidden effects"]:::private
+    DB[("Trial business DB")]
+    RUN["B-01–05 business run<br/>Observe arrivals, interruption and resume"]
+    N16 -.-> G
+    N16 --> DB
+    DB -->|"Scoped input reads"| RUN
+    G --> N19
+    N17 -->|"Controlled events"| RUN
+    RUN -->|"Actual DB state and traces"| N19
+    DB -->|"Actual committed state"| N19
+    classDef private fill:#fff1f1,stroke:#cf222e,color:#24292f
+    classDef implemented fill:#dafbe1,stroke:#1a7f37,color:#24292f
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    click N18 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-18.md"
+    click N16 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-16.md"
+    click N17 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-17.md"
+    click N19 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-19.md"
+```
+
+Only the trial preparation foundation for N-16 and financial-input events/virtual time for N-17 are implemented. Agent interruption/restart, attack injection/defense, the dedicated N-18 counterexample node, and N-19 outcome grading remain planned.
 
 ### Pipeline components and detailed nodes
 
-The diagram combines the business workflow with the test and evaluation environment. Trial import/resume, business input storage, scoped reads, and temporal input events are implemented; agent nodes, business Tool handlers, fault injection, and outcome grading remain design specifications. Detailed engineering documents are currently in Korean.
+The figures separate the business timeline and conditional routes from the test/evaluation environment. Trial import/resume, business input storage, scoped reads, and temporal input events are implemented; agent nodes, business Tool handlers, fault injection, and outcome grading remain design specifications. Detailed engineering documents are currently in Korean.
 
 | Diagram component | Role | Detailed nodes and contracts |
 |---|---|---|

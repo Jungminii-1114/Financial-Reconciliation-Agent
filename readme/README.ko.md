@@ -66,22 +66,205 @@ Agent는 한국어 요청을 해석하고 증거를 조사합니다. **하네스
 
 다음은 구현할 목표 구조입니다.
 
+### Figure 1. 시간 순서로 읽는 정상 재처리 경로
+
+**위 → 아래는 실행 시간, 각 행 안의 왼쪽 → 오른쪽은 Small Node 실행 순서입니다.** 업무 DB 준비 이후, 새 사례에서 근거가 재처리를 뒷받침하고 유효한 외부 승인을 받아 정상 응답까지 받은 한 경로를 보여줍니다. `N-xx`는 함수의 책임 경계이며 호출 횟수가 아닙니다. 노드를 클릭하면 상세 설계를 엽니다. 보라색은 기본 LLM 호출 지점, 주황색은 사람의 입력입니다.
+
+**구현 경계:** 데이터 생성·검증·업무 DB 적재·DB 재개·입력 사건 적용은 구현됐습니다. 아래 **N-01~N-19 업무·평가 노드 전체는 목표 설계**이며, 현재 DB 재개가 N-02/N-12의 Agent 복구를 뜻하지는 않습니다.
+
 ```mermaid
-flowchart LR
-    U["한국어 업무 요청"] --> H["Agent 하네스: 상태·증거·예산·재개"]
-    H <--> M["모델"]
-    H <--> T["업무 도구: 인자·권한·승인·버전 검사"]
-    T <--> D[("업무 DB")]
-    C["사건 컨트롤러"] -->|"자료 도착·시간 진행"| D
-    C -->|"장애·공격 주입"| H
-    H -->|"실행 기록"| E["독립 평가기"]
-    D -->|"실제 결과"| E
-    G["평가기 전용 정답 명세"] --> E
+flowchart TB
+    U["사용자 · 새 사례 조사 요청"]:::input
+    subgraph S1["B-01 · 접수·복원"]
+        direction LR
+        N01["N-01<br/>접수·현재 권한 확인<br/>TOOL-01"]
+        N02["N-02<br/>실행 상태·누적 예산 복원"]
+        N03["N-03<br/>현재 입력·문맥 구성<br/>TOOL-01"]
+        N01 --> N02 --> N03
+    end
+    subgraph S2["B-02 · 근거 조사"]
+        direction LR
+        N04["N-04<br/>조사 계획 제안 · LLM"]:::model
+        N05["N-05<br/>허용된 거래·이력 조회<br/>TOOL-02"]
+        N06["N-06<br/>근거·변경 영향 재검증"]
+        N07["N-07<br/>판단 시점의 근거 구성"]
+        N04 --> N05 --> N06 --> N07
+    end
+    subgraph S3["B-03 · 판단·승인"]
+        direction LR
+        N08["N-08<br/>조치 제안 · LLM<br/>REPROCESS"]:::model
+        N09["N-09<br/>사전 검사·외부 승인 확인<br/>TOOL-03"]
+        N10["N-10<br/>실행 의도·멱등 키 저장"]
+        N08 --> N09 --> N10
+    end
+    subgraph S4["B-04 · 실행"]
+        direction LR
+        N11["N-11<br/>승인된 대사 재처리 발행<br/>TOOL-04"]
+    end
+    subgraph S5["B-05 · 검증·전달"]
+        direction LR
+        N13["N-13<br/>실제 거래별 결과 검사<br/>TOOL-02 / 05"]
+        N14["N-14<br/>현재 버전으로 조건부 종료"]
+        N15["N-15<br/>결과·근거·한계 전달"]
+        N13 --> N14 --> N15
+    end
+    U --> S1 --> S2 --> S3 --> S4 --> S5
+    classDef input fill:#fff3df,stroke:#ad6800,color:#24292f
+    classDef model fill:#e5d7ff,stroke:#6f42c1,color:#24292f
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    style S1 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S2 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S3 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S4 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    style S5 fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click N01 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-01.md"
+    click N02 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-02.md"
+    click N03 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-03.md"
+    click N04 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-04.md"
+    click N05 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-05.md"
+    click N06 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-06.md"
+    click N07 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-07.md"
+    click N08 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-08.md"
+    click N09 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    click N10 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-10.md"
+    click N11 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-11.md"
+    click N13 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-13.md"
+    click N14 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-14.md"
+    click N15 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-15.md"
 ```
+
+정상 응답 경로는 N-12를 건너뜁니다. N-09는 별도 승인 UI/서비스의 인증된 이벤트를 확인하며, 모델의 제안이나 자연어 “승인”을 승인 레코드로 취급하지 않습니다. N-10의 의도는 하네스 상태 저장소에 기록하고, 업무 DB와 하나의 분산 트랜잭션이라고 가정하지 않습니다. N-15의 TOOL-06은 이관 초안을 작성할 때만 사용합니다.
+
+### Figure 2. 사용자 입력과 저장된 상태에 따른 경로 변화
+
+자연어 문장만으로 다음 노드를 결정하지 않습니다. **요청 + 현재 권한 + 복원된 작업 상태 + 입력 버전 + 실제 승인**을 코드로 확인해 분기합니다. A~D는 각각 독립적인 분기 예시이며, 패널 사이를 순서대로 실행하는 그래프가 아닙니다. 각 패널은 왼쪽에서 오른쪽으로 읽습니다. 주황색은 사람의 입력·승인 대기, 파란색은 미확정 작업 조회입니다. 재조회·재조사는 누적 예산 안에서 수행합니다.
+
+```mermaid
+flowchart TB
+    subgraph RESTORE["A · 새 요청 / 재개"]
+        direction LR
+        RESTORE_IN["사용자 · 확인 / 이어서 처리 요청"]:::input
+        RESTORE_Q{"N-01 → 02 → 03<br/>현재 권한·복원 상태·입력 확인"}
+        RESTORE_IN --> RESTORE_Q
+        RESTORE_fresh["N-06 preflight → N-04 / 05 필요 시<br/>N-07 → N-08"]:::normal
+        RESTORE_Q -->|"신규 / 입력 변경"| RESTORE_fresh
+        RESTORE_pending["N-12 · TOOL-05<br/>기존 작업의 실제 효과 조회"]:::recovery
+        RESTORE_Q -->|"미확정 작업"| RESTORE_pending
+        RESTORE_done["N-15 · 저장된 결정 재전달<br/>재처리 생략"]:::normal
+        RESTORE_Q -->|"완료 · 같은 입력"| RESTORE_done
+    end
+    subgraph ACTION["B · 근거에 따른 조치"]
+        direction LR
+        ACTION_IN["N-08 · 조사 후 조치 제안"]:::normal
+        ACTION_Q{"업무 규칙으로 제안 검사"}
+        ACTION_IN --> ACTION_Q
+        ACTION_observe["N-06 preflight → 필요한 재조회<br/>누적 조사 예산 내"]:::normal
+        ACTION_Q -->|"OBSERVE"| ACTION_observe
+        ACTION_wait["N-13 → N-14 → N-15<br/>근거 검사·전달 · 재처리 없음"]:::normal
+        ACTION_Q -->|"WAIT / ESCALATE"| ACTION_wait
+        ACTION_reprocess["N-09 · 사전 검사·외부 승인<br/>승인 없이는 발행 금지"]:::normal
+        ACTION_Q -->|"REPROCESS"| ACTION_reprocess
+    end
+    subgraph APPROVAL["C · 승인권자의 입력"]
+        direction LR
+        APPROVAL_IN["별도 승인 UI<br/>인증된 승인 / 거부 이벤트"]:::input
+        APPROVAL_Q{"N-09 · 현재 계획·입력·승인 검사"}
+        APPROVAL_IN --> APPROVAL_Q
+        APPROVAL_approved["N-10 → N-11 · TOOL-04<br/>의도 저장 후 발행"]:::normal
+        APPROVAL_Q -->|"유효 승인 · 동일 입력"| APPROVAL_approved
+        APPROVAL_paused["PAUSED_FOR_APPROVAL<br/>쓰기 없이 승인 대기"]:::input
+        APPROVAL_Q -->|"미승인"| APPROVAL_paused
+        APPROVAL_denied["쓰기 차단<br/>검증된 이관 / 대기 사유 전달"]:::normal
+        APPROVAL_Q -->|"거부 / 만료"| APPROVAL_denied
+        APPROVAL_stale["N-06 preflight부터 재조사<br/>새 계획·승인 필요"]:::normal
+        APPROVAL_Q -->|"입력 변경"| APPROVAL_stale
+    end
+    subgraph RECOVERY["D · 중단 / 응답 유실 뒤"]
+        direction LR
+        RECOVERY_IN["N-12 · TOOL-05<br/>기존 ID로 조회 · 즉시 재발행 금지"]:::recovery
+        RECOVERY_Q{"반영 효과와 입력 변경을 별도 확인"}
+        RECOVERY_IN --> RECOVERY_Q
+        RECOVERY_applied["N-13 → N-14 → N-15<br/>기존 결과 검증·회수"]:::normal
+        RECOVERY_Q -->|"반영됨 · 입력 동일"| RECOVERY_applied
+        RECOVERY_retry["N-06 이후 재조사·승인 검사<br/>같은 의도·키로만 재시도"]:::normal
+        RECOVERY_Q -->|"미반영 증명 · 동일 입력 · 재시도 허용"| RECOVERY_retry
+        RECOVERY_unknown["예산 내 추가 조회<br/>상한 뒤 이관 근거 검사"]:::normal
+        RECOVERY_Q -->|"불명"| RECOVERY_unknown
+        RECOVERY_changed["N-06 preflight → 새 조사<br/>반영 여부와 별개로 판단"]:::normal
+        RECOVERY_Q -->|"입력 변경 · 과거 효과 보존"| RECOVERY_changed
+    end
+    RESTORE ~~~ ACTION ~~~ APPROVAL ~~~ RECOVERY
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    classDef normal fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    classDef input fill:#fff3df,stroke:#ad6800,color:#24292f
+    classDef recovery fill:#e6f4ff,stroke:#0969da,color:#24292f
+    style RESTORE fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click RESTORE_fresh "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    click RESTORE_pending "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RESTORE_done "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-15.md"
+    style ACTION fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click ACTION_observe "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    click ACTION_wait "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-05.md"
+    click ACTION_reprocess "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    style APPROVAL fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click APPROVAL_approved "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-04.md"
+    click APPROVAL_paused "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-09.md"
+    click APPROVAL_denied "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-03.md"
+    click APPROVAL_stale "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+    style RECOVERY fill:#ffffff,stroke:#d0d7de,color:#24292f
+    click RECOVERY_applied "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-05.md"
+    click RECOVERY_retry "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RECOVERY_unknown "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-12.md"
+    click RECOVERY_changed "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/big-nodes/B-02.md"
+```
+
+| 사용자 입력 / 후속 사건 | 내부 로직과 달라지는 경로 | 실행·출력 원칙 |
+|---|---|---|
+| “이 배치 확인해줘” · 신규 사례 | N-01~03 → N-04~07 → N-08 | 자료 미도착은 WAIT, 불일치·해결 불명은 ESCALATE, 재처리 조건 충족은 REPROCESS 후보입니다. N-08 제안은 코드 검사를 거칩니다. |
+| “이어서 처리해줘” · 미확정 작업 | N-01~03 → **N-12 / TOOL-05** | 반영·동일 입력이면 N-13으로 결과 회수. 권위 있는 미반영·재시도 허가가 있을 때만 재조사·승인 확인 후 **같은 의도·키**로 재시도합니다. 불명은 한도 내 추가 조회 후 이관합니다. |
+| “결과 다시 보여줘” · 같은 버전의 완료 결정 | N-01~03 → **N-15** | 현재 읽기 권한을 확인하고 저장된 as-of 결정을 재전달합니다. 재처리·승인 재소비는 없습니다. |
+| 별도 승인 UI의 인증된 승인/거부 | **N-09** → 유효 승인일 때만 N-10~11 | 무응답이면 PAUSED_FOR_APPROVAL. 거부·만료는 쓰기 차단, 입력 변경은 N-06 preflight부터 재조사합니다. 승인 대기는 업무상 WAIT와 다른 상태입니다. |
+| “자료가 들어왔으니 다시 확인해줘” · 새 도착/정정 | N-01~03 → **N-06 preflight** → 필요한 N-04/05 → N-07/08 | 요청 문장 대신 DB의 변경 이력·버전을 확인합니다. 영향이 없고 근거가 충분하면 재조회를 생략합니다. 과거 결정은 보존합니다. |
+| “승인 없이 실행해” / 외부 메모의 승인 사칭 | N-01의 범위 검사·N-09/10의 승인 검사 유지 | 자연어·외부 문장으로 권한을 바꾸지 않습니다. 악성 입력의 식별·방어 성능은 구현 후 별도로 평가할 항목입니다. |
+
+N-12는 **과거 작업의 반영 여부**와 **현재 입력의 변경 여부**를 별개로 확인합니다. 이미 반영됐어도 입력이 바뀌었다면 과거 효과를 보존하고 새 조사로 돌아갑니다. N-11의 버전·승인 거부도 재조사/승인 확인으로 반환합니다. N-13/14는 검증 실패를 성공으로 통과시키지 않으며, 확인된 실패·이관 사실만 저장하거나 완료를 차단합니다. 접수 불충분·권한 거부는 N-01에서 중단하고 N-15로 허용된 사유만 전달합니다. 자세한 예외·오류 경로는 [Big Node 계약](../docs/big-nodes/README.md)을 따릅니다.
+
+### Figure 3. 준비 → 실행 중 사건 → 종료 후 독립 평가
+
+**B-06은 사용자 업무 경로 밖의 평가 환경입니다.** 초록색은 구현된 합성기·검사기입니다. N-18은 번호와 달리 평가 동결 전에 실행하며, N-17은 업무 실행 중 사건을 적용하고 실제 발생 증거를 남깁니다. 정답·미래 사건 계획을 수행 모델에 전달하지 않습니다.
+
+```mermaid
+flowchart TB
+    DATA["구현 · 합성 fixture<br/>생성·독립 검증"]:::implemented
+    N18["N-18<br/>동결 전 반례·정상 변환 준비"]
+    N16["N-16<br/>동결 사례·정답 분리·trial 준비"]
+    N17["N-17<br/>실행 중 사건·장애·공격 재생"]
+    N19["N-19<br/>DB·실행 기록 독립 판정·집계"]
+    DATA --> N18 --> N16 --> N17 --> N19
+    G["평가기 전용 정답·금지 효과"]:::private
+    DB[("trial 업무 DB")]
+    RUN["B-01~05 업무 실행<br/>자료 도착·중단·재개를 관측"]
+    N16 -.-> G
+    N16 --> DB
+    DB -->|"범위 제한 입력 조회"| RUN
+    G --> N19
+    N17 -->|"통제된 사건"| RUN
+    RUN -->|"실제 DB 상태·기록"| N19
+    DB -->|"실제 반영 상태"| N19
+    classDef private fill:#fff1f1,stroke:#cf222e,color:#24292f
+    classDef implemented fill:#dafbe1,stroke:#1a7f37,color:#24292f
+    classDef default fill:#f6f8fa,stroke:#8c959f,color:#24292f
+    click N18 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-18.md"
+    click N16 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-16.md"
+    click N17 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-17.md"
+    click N19 "https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/master/docs/small-nodes/N-19.md"
+```
+
+현재 N-16에 연결할 trial 준비와 N-17의 금융 입력 사건·가상 시계 기반만 구현됐습니다. Agent 중단·재시작, 공격 주입·방어, N-18의 전용 반례 생성 노드와 N-19의 결과 채점은 계획입니다.
 
 ### 파이프라인 구성 요소와 상세 노드
 
-모식도는 업무 처리 흐름과 시험·평가 환경을 함께 보여줍니다. 초기 적재·DB 재개·입력 이력·범위 제한 읽기·시간별 입력 사건은 구현됐습니다. Agent 노드·업무 Tool·실제 장애 주입·결과 채점은 설계 단계입니다. 아래 링크에서 상세 계약을 확인할 수 있습니다.
+위 그림들은 업무의 시간 순서·조건부 분기와 분리된 시험·평가 환경을 보여줍니다. 초기 적재·DB 재개·입력 이력·범위 제한 읽기·시간별 입력 사건은 구현됐습니다. Agent 노드·업무 Tool·실제 장애 주입·결과 채점은 설계 단계입니다. 아래 링크에서 상세 계약을 확인할 수 있습니다.
 
 | 모식도 구성 요소 | 역할 | 상세 노드·계약 |
 |---|---|---|
