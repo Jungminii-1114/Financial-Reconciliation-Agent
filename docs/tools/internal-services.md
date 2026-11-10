@@ -6,6 +6,8 @@
 
 `dispatch_tool(tool_name, payload, trusted_context, phase) -> NodeResult[T]`
 
+위 표기는 개념 인터페이스다. 구현할 요청 타입·서비스 주입·선택적 phase·감사 기록의 정본은 [공통 호출 계약](../contracts/tool-call-contract.md)이다. 해당 문서의 `dispatch_tool(invocation, ctx, services, *, phase=None)`으로 구체화하며 아직 실제 함수는 없다.
+
 - tool registry·payload schema·scope binding·단계·예산을 검사하고 6개 업무 구현으로 전달한다.
 - 모델이 전달한 principal/scope/clock/trust 값은 거부한다. 현재 권한을 서버 컨텍스트에서 가져온다.
 - 시도와 실제 handler 도달·서비스 거부·DB 효과를 다른 이벤트로 기록한다.

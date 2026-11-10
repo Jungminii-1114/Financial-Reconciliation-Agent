@@ -4,6 +4,8 @@
 >
 > [Tool 목록·공통 규칙](README.md) · [업무 DB](../contracts/business-data.md) · [보안](../contracts/security-boundary.md)
 
+**구현 선행 설계:** [공통 호출 계약](../contracts/tool-call-contract.md) · [현재 repository와의 연결](../contracts/tool-call-contract.md#11-기존-db-어댑터와-tool-01-연결). 아래 API 표기는 개념 계약이며 공통 문서의 서비스 주입·엄격한 요청 타입으로 구체화한다.
+
 ## 1. 목적과 호출 경계
 
 인증된 scope 내 사건의 대상·도착 상태·현재 입력·허용 작업 참조를 반환한다. 접수문·외부 메모를 권한 정보와 분리한다.

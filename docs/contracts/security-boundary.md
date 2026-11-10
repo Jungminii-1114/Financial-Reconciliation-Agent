@@ -14,7 +14,7 @@
 
 ## 2. 신뢰된 호출 외피
 
-`TrustedCallContext = {principal_id, logical_run_id, session_id, tool_call_id, allowed_case_ids, allowed_batch_ids, scope_version, policy_version, server_now, config_hash}`.
+구체적인 필드·검증 순서는 [공통 호출 계약](tool-call-contract.md#4-서버가-제공하는-trustedcallcontext)을 따른다. `TrustedCallContext`는 principal·trial/run/session/call ID, budget group, `allowed_targets` 대상 쌍, allowed_tools, scope/policy 버전, 실제 서버 시각과 config hash를 담는다. 기존의 case/batch 독립 목록 대신 `(case_id, batch_id)` 쌍을 검사하여 허용되지 않은 교차 조합을 차단한다.
 
 외피는 하네스/서버가 생성한다. 모델 요청 body의 principal·scope·시간·trust 같은 필드는 허용 스키마 밖으로 거부한다. 외부 메모에 `approved=true`나 시스템 역할 태그가 있어도 권한으로 사용하지 않는다.
 

@@ -2,6 +2,8 @@
 
 > 설계 초안 / 미구현. [문서 홈](../README.md) · [Small Node](../small-nodes/README.md) · [내부 서비스](internal-services.md)
 
+**구현 전 먼저 읽기:** [공통 호출 계약 tool-call-1](../contracts/tool-call-contract.md). 모델 업무 인자와 서버 권한 문맥, 네 필드 응답, 대상 쌍 검사, 호출 기록·오류·재시도·최소 QA를 정의한다. 여섯 handler는 아직 미구현이다.
+
 | ID | 모델 등록 이름 | 효과 | 책임 |
 |---|---|---|---|
 | [TOOL-01](TOOL-01.md) | `get_case` | 업무 읽기 | 사건·대상·현재 입력 조회 |
