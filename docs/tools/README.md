@@ -13,6 +13,8 @@
 | [TOOL-05](TOOL-05.md) | `get_operation` | 업무 읽기 | 작업 효과·결과·재시도 조건 조회 |
 | [TOOL-06](TOOL-06.md) | `prepare_escalation` | 범위 제한 아티팩트 작성, 업무 입력 변경 없음 | 근거가 있는 이관 초안 구성 |
 
+**TOOL-01 검증 근거:** [정식 보고서](reports/tool-01/validation-report.md) · [실행 결과 JSON](reports/tool-01/results.json) · [테스트 코드](../../tests/test_get_case.py).
+
 ## Tool과 노드의 차이
 
 Tool은 외부 업무 기능의 안정된 계약이다. Small Node는 이를 호출하거나 모델·코드 검사를 수행하는 처리 단위다. Big Node는 단계와 분기를 관리한다. H의 고정 그래프와 B0/B1의 도구 루프는 위 6개 구현을 공유하며 권한·기본 서버 보호를 달리하지 않는다.

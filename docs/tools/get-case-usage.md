@@ -59,6 +59,8 @@ ledger는 trial 폴더 밖의 별도 경로에 둔다. CLI는 trial 내부 ledge
 
 ## 검증
 
+**[정식 검증 보고서: 항목별 조건·기대/실제 결과·실행 로그](reports/tool-01/validation-report.md)** · [기계 판독 결과](reports/tool-01/results.json)
+
 ```bash
 python3.11 -m unittest discover -s tests
 python3.11 -m unittest discover -s tests -p test_get_case.py

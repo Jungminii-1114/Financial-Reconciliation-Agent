@@ -1,0 +1,33 @@
+test_ambiguous_case_denied (test_get_case.GetCaseTests.test_ambiguous_case_denied) ... ok
+test_audit_failure_prevents_handler (test_get_case.GetCaseTests.test_audit_failure_prevents_handler) ... ok
+test_budget_persists_across_sessions_and_reopen (test_get_case.GetCaseTests.test_budget_persists_across_sessions_and_reopen) ... ok
+test_call_id_reuse_is_not_another_attempt (test_get_case.GetCaseTests.test_call_id_reuse_is_not_another_attempt) ... ok
+test_cli_uses_existing_trial_and_external_runtime_ledger (test_get_case.GetCaseTests.test_cli_uses_existing_trial_and_external_runtime_ledger) ... ok
+test_concurrent_budget_reservation (test_get_case.GetCaseTests.test_concurrent_budget_reservation) ... ok
+test_config_and_policy_rechecked (test_get_case.GetCaseTests.test_config_and_policy_rechecked) ... ok
+test_context_cannot_use_mutable_permissions (test_get_case.GetCaseTests.test_context_cannot_use_mutable_permissions) ... ok
+test_cross_pair_denied (test_get_case.GetCaseTests.test_cross_pair_denied) ... ok
+test_deadline_expired_before_sql (test_get_case.GetCaseTests.test_deadline_expired_before_sql) ... ok
+test_entire_pilot_can_be_observed (test_get_case.GetCaseTests.test_entire_pilot_can_be_observed) ... ok
+test_future_note_hidden (test_get_case.GetCaseTests.test_future_note_hidden) ... ok
+test_input_tampering_is_not_trusted_digest (test_get_case.GetCaseTests.test_input_tampering_is_not_trusted_digest) ... ok
+test_ledger_hash_matches_actual_success_and_error_response (test_get_case.GetCaseTests.test_ledger_hash_matches_actual_success_and_error_response) ... ok
+test_missing_case_only_after_scope_admission (test_get_case.GetCaseTests.test_missing_case_only_after_scope_admission) ... ok
+test_missing_runtime_is_error_not_default (test_get_case.GetCaseTests.test_missing_runtime_is_error_not_default) ... ok
+test_output_limit_blocks_whole_response (test_get_case.GetCaseTests.test_output_limit_blocks_whole_response) ... ok
+test_parser_rejects_extra_fields_missing_and_wrong_types (test_get_case.GetCaseTests.test_parser_rejects_extra_fields_missing_and_wrong_types) ... ok
+test_phase_gate_optional (test_get_case.GetCaseTests.test_phase_gate_optional) ... ok
+test_post_handler_audit_failure_does_not_expose_result (test_get_case.GetCaseTests.test_post_handler_audit_failure_does_not_expose_result) ... ok
+test_real_arrival_changes_version_and_preserves_old_reference (test_get_case.GetCaseTests.test_real_arrival_changes_version_and_preserves_old_reference) ... ok
+test_response_type_validation_rejects_bool_version (test_get_case.GetCaseTests.test_response_type_validation_rejects_bool_version) ... ok
+test_round_trip_read_only_and_public_fields (test_get_case.GetCaseTests.test_round_trip_read_only_and_public_fields) ... ok
+test_scope_denied_before_handler (test_get_case.GetCaseTests.test_scope_denied_before_handler) ... ok
+test_security_notes_remain_untrusted_and_hash_checked (test_get_case.GetCaseTests.test_security_notes_remain_untrusted_and_hash_checked) ... ok
+test_small_response_limit_also_bounds_error_envelope (test_get_case.GetCaseTests.test_small_response_limit_also_bounds_error_envelope) ... ok
+test_unknown_exception_is_payload_free (test_get_case.GetCaseTests.test_unknown_exception_is_payload_free) ... ok
+test_unknown_tool_and_contract_are_counted (test_get_case.GetCaseTests.test_unknown_tool_and_contract_are_counted) ... ok
+
+----------------------------------------------------------------------
+Ran 28 tests in 2.459s
+
+OK
