@@ -8,7 +8,7 @@
 
 > A harness engineering project for financial reconciliation agents that recover from interrupted execution, verify business outcomes, and handle malicious external instructions within explicit permission boundaries.
 
-**Project status:** In development. Synthetic data generation and inspection, a versioned business-DB import adapter, explicit trial resume, scoped read-only storage, and atomic arrival/correction events are implemented. The six business Tool handlers, agent, approval/reprocessing services, process-recovery harness, security controls, and outcome evaluation remain planned. No agent performance results have been established.
+**Project status:** In development. Synthetic data generation and inspection, a versioned business-DB import adapter, explicit trial resume, scoped read-only storage, and atomic arrival/correction events are implemented. TOOL-01 get_case and a local dispatcher with durable call budgets/audit are implemented. TOOL-02–06, agent, approval/reprocessing services, process-recovery harness, injection defenses, and outcome evaluation remain planned. No agent performance results have been established.
 
 **Available now:** [Synthetic data v1: one-command setup and usage guide →](docs/data-generation/README.en.md) · [Six-case teaching starter](examples/synthetic_data_starter/README.en.md) · [Business-DB adapter: prepare, inspect, resume (한국어)](docs/data-adapter/README.md)
 
@@ -54,7 +54,7 @@ A completion message does not establish that the intended batch was processed co
 | Synthetic data | Python standard library, fixed seeds, temporal events, paired security fixtures | Implemented |
 | Data validation and inspection | Independent SQLite matching, HTML preview, operator-only DB export | Implemented |
 | Trial storage and input events | Python sqlite3, versioned import, as-of history, role-separated stores | Implemented; [guide (한국어)](docs/data-adapter/README.md) |
-| Business service | Six Tool handlers, approval and reprocessing; planned Python/Pydantic/FastAPI adapters | Planned |
+| Business service | TOOL-01 with Python dispatcher, durable call ledger; remaining tools and approval/reprocessing | TOOL-01 implemented; [guide (한국어)](docs/tools/get-case-usage.md) |
 | Persistent execution | LangGraph with persistent checkpoints | Planned |
 | Inference | Colab GPU; Qwen3-4B-Instruct-2507 as an initial candidate | Pilot required |
 | Outcome evaluation | Python, SQL, pytest, structured execution logs | Planned |
@@ -262,7 +262,7 @@ Only the trial preparation foundation for N-16 and financial-input events/virtua
 
 ### Pipeline components and detailed nodes
 
-The figures separate the business timeline and conditional routes from the test/evaluation environment. Trial import/resume, business input storage, scoped reads, and temporal input events are implemented; agent nodes, business Tool handlers, fault injection, and outcome grading remain design specifications. Detailed engineering documents are currently in Korean.
+The figures separate the business timeline and conditional routes from the test/evaluation environment. Trial import/resume, business input storage, scoped reads, and temporal input events are implemented; TOOL-01 is implemented; agent nodes, remaining Tool handlers, fault injection, and outcome grading remain design specifications. Detailed engineering documents are currently in Korean.
 
 | Diagram component | Role | Detailed nodes and contracts |
 |---|---|---|

@@ -1,8 +1,8 @@
 # 업무 Tool — 6개 기능의 상세 API 계약
 
-> 설계 초안 / 미구현. [문서 홈](../README.md) · [Small Node](../small-nodes/README.md) · [내부 서비스](internal-services.md)
+> TOOL-01 로컬 구현 / TOOL-02~06 설계 단계. [문서 홈](../README.md) · [Small Node](../small-nodes/README.md) · [내부 서비스](internal-services.md)
 
-**구현 전 먼저 읽기:** [공통 호출 계약 tool-call-1](../contracts/tool-call-contract.md). 모델 업무 인자와 서버 권한 문맥, 네 필드 응답, 대상 쌍 검사, 호출 기록·오류·재시도·최소 QA를 정의한다. 여섯 handler는 아직 미구현이다.
+**구현 전 먼저 읽기:** [공통 호출 계약 tool-call-1](../contracts/tool-call-contract.md). 모델 업무 인자와 서버 권한 문맥, 네 필드 응답, 대상 쌍 검사, 호출 기록·오류·재시도·최소 QA를 정의한다. TOOL-01과 최소 공통 호출 경로는 구현됐으며 나머지 다섯 handler는 미구현이다. [TOOL-01 사용 설명서](get-case-usage.md).
 
 | ID | 모델 등록 이름 | 효과 | 책임 |
 |---|---|---|---|

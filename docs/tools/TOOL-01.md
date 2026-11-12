@@ -1,6 +1,6 @@
 # TOOL-01 · get_case — 사건·대상·현재 입력 조회
 
-> **설계 초안 / 미구현**. 모델 등록 이름: `get_case` · 업무 읽기 · 주 사용 노드: [N-01](../small-nodes/N-01.md) · [N-03](../small-nodes/N-03.md) · [N-12](../small-nodes/N-12.md)
+> **로컬 Python 구현 / 2026-11-12**. [실행·검증·한계](get-case-usage.md). HTTP·MCP 연결은 미구현. 모델 등록 이름: `get_case` · 업무 읽기 · 주 사용 노드: [N-01](../small-nodes/N-01.md) · [N-03](../small-nodes/N-03.md) · [N-12](../small-nodes/N-12.md)
 >
 > [Tool 목록·공통 규칙](README.md) · [업무 DB](../contracts/business-data.md) · [보안](../contracts/security-boundary.md)
 

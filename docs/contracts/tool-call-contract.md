@@ -4,6 +4,8 @@
 >
 > [문서 홈](../README.md) · [Tool 목록](../tools/README.md) · [TOOL-01](../tools/TOOL-01.md) · [내부 서비스](../tools/internal-services.md) · [보안 경계](security-boundary.md) · [복구](persistence-and-recovery.md)
 
+**구현 갱신 2026-11-12:** [TOOL-01과 최소 공통 호출 경로](../tools/get-case-usage.md)는 구현됐다. 이 문서 전체의 여섯 Tool·복구·전송 계층이 모두 구현된 것은 아니다.
+
 ## 1. 무엇을 설계하는가
 
 공통 호출 계약은 **어떤 Tool을, 누구의 권한으로, 어떤 인자로 호출하고, 결과와 실패를 어떻게 해석하고 기록할지** 정하는 규칙이다. 모델마다 다른 방식으로 업무 DB를 직접 호출하게 두지 않고 같은 Python dispatcher와 업무 서비스를 사용한다.

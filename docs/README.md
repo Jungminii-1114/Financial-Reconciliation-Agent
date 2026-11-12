@@ -1,6 +1,6 @@
 # 금융 대사 Agent 하네스 — 설계 문서
 
-> 설계 기준: **v0.1**, 구현 상태 갱신: **2026-11-05**. [자체 합성기 v1](data-generation/README.md)은 생성·독립 SQL 검사·시간 스냅샷·HTML/SQLite 열람까지 구현됐다. [업무 DB 적재 어댑터](data-adapter/README.md)는 초기 적재·재개·시점별 읽기·입력 사건까지 구현됐다. 아래 노드·업무 Tool 서비스·실제 결과 평가기는 아직 제안 명세다. [기존 교육용 예제](../examples/synthetic_data_starter/README.md)도 유지한다. 개별 문서의 설계 예시와 구현 상태를 구분한다.
+> 설계 기준: **v0.1**, 구현 상태 갱신: **2026-11-12**. [자체 합성기 v1](data-generation/README.md)은 생성·독립 SQL 검사·시간 스냅샷·HTML/SQLite 열람까지 구현됐다. [업무 DB 적재 어댑터](data-adapter/README.md)는 초기 적재·재개·시점별 읽기·입력 사건까지 구현됐다. [TOOL-01·로컬 공통 호출 경로](tools/get-case-usage.md)는 구현됐다. 아래 Agent 노드·나머지 Tool·승인/재처리 서비스·실제 결과 평가기는 아직 제안 명세다. [기존 교육용 예제](../examples/synthetic_data_starter/README.md)도 유지한다. 개별 문서의 설계 예시와 구현 상태를 구분한다.
 >
 > Engineering specifications are written in Korean; stable IDs and API names use English. Main README: [English](../README.md) · [한국어](../readme/README.ko.md).
 
