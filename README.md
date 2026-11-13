@@ -14,6 +14,8 @@
 
 **Engineering docs (한국어):** [Overall plan](docs/README.md) · [Big Nodes](docs/big-nodes/README.md) · [Small Nodes](docs/small-nodes/README.md) · [Tool contracts](docs/tools/README.md)
 
+**Web UI prototype:** [Run locally](web/README.md) · Mock business workflows and recorded validation evidence; Python/SQLite API integration is planned.
+
 ## Overview
 
 Financial reconciliation checks whether records held by different systems agree. This project models a financial IT operations task: compare internal transactions with external settlement records, investigate exceptions, and propose **reprocessing, waiting, or escalation**.

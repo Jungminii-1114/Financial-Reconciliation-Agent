@@ -1,0 +1,68 @@
+{
+  "commands": [
+    {
+      "command": "python3.11 scripts/dataset.py build --config configs/synthetic-pilot.json --out <tmp>/pilot",
+      "returncode": 0
+    },
+    {
+      "command": "python3.11 scripts/trial.py prepare --dataset <tmp>/pilot --case c_2e8b6b7c4702 --trial-id tool1-delay --out <tmp>/trial",
+      "returncode": 0
+    },
+    {
+      "command": "python3.11 scripts/get_case.py --trial <tmp>/trial --case c_2e8b6b7c4702 --trial-id tool1-delay --ledger <tmp>/runtime/calls.sqlite",
+      "returncode": 0
+    },
+    {
+      "command": "python3.11 scripts/trial.py advance --trial <tmp>/trial --case c_2e8b6b7c4702 --trial-id tool1-delay --to 2026-11-05T10:05:00+09:00",
+      "returncode": 0
+    },
+    {
+      "command": "python3.11 scripts/get_case.py --trial <tmp>/trial --case c_2e8b6b7c4702 --trial-id tool1-delay --ledger <tmp>/runtime/calls.sqlite --session-id session-2",
+      "returncode": 0
+    }
+  ],
+  "observations": {
+    "config": "configs/synthetic-pilot.json",
+    "rows_per_batch": 100,
+    "seed": 42,
+    "before": {
+      "status": "success",
+      "case_id": "c_2e8b6b7c4702",
+      "batch_id": "BATCH001",
+      "input_version": 1,
+      "input_digest": "sha256:95fc2079e50279f42a83663229b8494c51b5fa37b6e77c5aa81ed16627820c3f",
+      "decision_at": "2026-11-05T01:00:00.000000+00:00",
+      "ingestion_complete": false,
+      "processing_state": "FAILED",
+      "operation_ref_count": 0,
+      "external_note_count": 1
+    },
+    "after": {
+      "status": "success",
+      "case_id": "c_2e8b6b7c4702",
+      "batch_id": "BATCH001",
+      "input_version": 2,
+      "input_digest": "sha256:9b2be7eb04a9f0ddfe35d0552e7f0a39b88a3599a2da9caf0e514d27c728e076",
+      "decision_at": "2026-11-05T01:05:00.000000+00:00",
+      "ingestion_complete": true,
+      "processing_state": "FAILED",
+      "operation_ref_count": 0,
+      "external_note_count": 1
+    },
+    "external_rows_after": 100,
+    "business_db_unchanged_by_reads": [
+      true,
+      true
+    ],
+    "ledger_used": 2,
+    "ledger_sessions": [
+      "session-1",
+      "session-2"
+    ],
+    "ledger_statuses": [
+      "success",
+      "success"
+    ],
+    "status": "passed"
+  }
+}

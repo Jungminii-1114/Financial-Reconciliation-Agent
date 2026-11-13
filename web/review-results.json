@@ -1,0 +1,29 @@
+{
+  "checks": [
+    "Persistent mock/connection disclosure",
+    "02. Cases renders",
+    "03. Agent Workspace renders",
+    "04. Recovery Lab renders",
+    "05. Evaluations renders",
+    "06. Audit Trail renders",
+    "07. Settings renders",
+    "Recorded evidence explains overlapping test counts",
+    "Fabricated recovery benchmark removed",
+    "Case search filters real displayed list",
+    "No-result state",
+    "Business status filter",
+    "Matching failed-batch demo enables approval only after timeline",
+    "Non-approver cannot approve",
+    "Confirmation describes UI-only effect",
+    "Escape closes accessible modal",
+    "Demo approval completion",
+    "Fault injection blocked before start",
+    "Recovery UI follows start/inject/resume sequence",
+    "Changing case resets recovery state",
+    "Changing case resets Agent demo state",
+    "No browser runtime errors across desktop interactions",
+    "Mobile navigation",
+    "No mobile document horizontal overflow"
+  ],
+  "errors": []
+}

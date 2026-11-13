@@ -14,6 +14,8 @@
 
 **상세 설계 문서:** [Overall Plan](../docs/README.md) · [Big Node](../docs/big-nodes/README.md) · [Small Node](../docs/small-nodes/README.md) · [Tool 명세](../docs/tools/README.md)
 
+**웹 UI 프로토타입:** [실행 방법](../web/README.md) · 모의 업무 화면과 기록된 테스트 결과를 볼 수 있습니다. Python/SQLite API 연결은 후속 단계입니다.
+
 ## Overview
 
 **대사(Reconciliation)**는 서로 다른 시스템에 기록된 거래 내역을 대조하는 작업입니다. 이 프로젝트는 모의 금융 IT 운영 담당자를 위해 내부 거래와 외부 정산 기록을 조사하고 **재처리·대기·담당자 이관** 중 적절한 조치를 제안합니다.
