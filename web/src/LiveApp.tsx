@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Activity, ArrowRight, Check, CircleAlert, CircleCheck, CircleDashed, CircleMinus, Database,
-  FileText, GitBranch, LoaderCircle, Minus, Play, RefreshCw, RotateCcw, Scale, ShieldCheck,
-  Terminal, TriangleAlert, Undo2, UserCheck, Zap,
+  Activity, ArrowRight, Bot, Check, CircleAlert, CircleCheck, CircleDashed, CircleMinus, CircleX, Clock, Database,
+  FileCheck, FileSpreadsheet, FileText, GitBranch, Landmark, ListChecks, LoaderCircle, Minus, Play, Receipt,
+  RefreshCw, RotateCcw, Scale, ShieldCheck, TriangleAlert, Undo2, User, UserCheck, Zap,
 } from 'lucide-react';
 import './live.css';
 
@@ -206,6 +206,24 @@ function nextHint(action: Action | undefined, state: CaseState): string {
   }
 }
 
+/* ───────────────────────── Shared helpers for the report ───────────────────────── */
+
+type Issue = '금액 불일치' | '미도착' | '예상 외' | '중복' | '미정산';
+function issues(trial: LiveTrial) {
+  const s = trial.summary;
+  const flag = new Map<string, Issue>();
+  for (const id of s.unsettled_transaction_ids) flag.set(id, '미정산');
+  for (const id of s.duplicate_transaction_ids) flag.set(id, '중복');
+  for (const id of s.unexpected_external_ids) flag.set(id, '예상 외');
+  for (const id of s.missing_external_ids) flag.set(id, '미도착');
+  for (const id of s.mismatched_ids) flag.set(id, '금액 불일치');
+  const ids = [...new Set([...trial.internal, ...trial.external].map(r => r.transaction_id))].sort();
+  return { flag, ids, flagged: ids.filter(id => flag.has(id)) };
+}
+const issueTone = (issue?: Issue): Tone => !issue ? 'ok' : issue === '금액 불일치' || issue === '미정산' ? 'warn' : 'danger';
+const signed = (n: number) => `${n > 0 ? '+' : n < 0 ? '−' : ''}${won.format(Math.abs(n))}`;
+const pct = (part: number, whole: number) => whole ? `${Math.round((part / whole) * 1000) / 10}%` : '—';
+
 /* ───────────────────────── App ───────────────────────── */
 
 export default function LiveApp() {
@@ -265,8 +283,7 @@ export default function LiveApp() {
     if (confirming && !dialog.current?.open) {
       dialog.current?.showModal();
       cancelButton.current?.focus();
-    }
-    else if (!confirming && dialog.current?.open) dialog.current.close();
+    } else if (!confirming && dialog.current?.open) dialog.current.close();
   }, [confirming]);
 
   const pick = (id: string) => {
@@ -318,128 +335,175 @@ export default function LiveApp() {
     : undefined;
   const canRestart = !!trial && !!state?.available.includes('start');
   const descriptor = scenarios.find(item => item.id === selected);
-  const flow = state ? steps(trial, state.stage) : [];
+
+  const actions = state && <div className="wb-actions">
+    {primary && <ActionButton action={primary} busy={busy === primary} disabled={busy !== null}
+      onClick={() => primary === 'approve' ? setConfirming(true) : act(primary)} />}
+    {canRestart && <button className="wb-btn ghost" disabled={busy !== null} onClick={() => act('start')}
+      title="새 trial을 적재합니다. 이전 실험 기록은 보존됩니다.">
+      {busy === 'start' ? <LoaderCircle size={15} className="wb-spin" /> : <RotateCcw size={15} />} 새 실험
+    </button>}
+  </div>;
 
   return (
     <div className="wb">
-      <aside className="wb-rail" aria-label="사례 탐색">
+      {/* ── Pane 1 · case navigation ── */}
+      <aside className="wb-nav" aria-label="사례 탐색">
         <header className="wb-brand">
-          <span className="wb-brand-mark"><ShieldCheck size={18} /></span>
-          <div><strong>대사 운영 워크벤치</strong><small>Reconciliation Agent Harness</small></div>
+          <span className="wb-brand-mark"><ShieldCheck size={16} /></span>
+          <strong>대사 워크벤치</strong>
         </header>
+        <div className="wb-nav-tabs" aria-hidden="true"><span className="on">사례</span><span>로컬 MVP</span></div>
         <nav className="wb-cases">
-          {scenarios.length > 0 && <div className="wb-rail-label">P0 시연</div>}
+          {scenarios.length > 0 && <div className="wb-nav-label">P0 시연</div>}
           {scenarios.map((item, i) => {
             const info = overview[item.id];
             return <React.Fragment key={item.id}>
-              {i === 1 && <div className="wb-rail-label">비교 경로</div>}
+              {i === 1 && <div className="wb-nav-label">비교 경로</div>}
               <button className={`wb-case ${selected === item.id ? 'is-on' : ''}`} onClick={() => pick(item.id)}
                 aria-current={selected === item.id ? 'page' : undefined} disabled={working}>
-                <span className="wb-case-title">{item.title}</span>
-                <span className="wb-case-meta">
-                  <StageDot stage={info?.stage} outcome={info?.outcome} />
-                  {info ? (info.outcome ? outcomeLabel[info.outcome] : stageLabel[info.stage]) : '…'}
-                  <code>{item.id}</code>
+                <FileText size={16} className="wb-case-icon" />
+                <span className="wb-case-text">
+                  <span className="wb-case-title">{item.title}</span>
+                  <span className="wb-case-meta"><StageDot stage={info?.stage} outcome={info?.outcome} />
+                    {info ? (info.outcome ? outcomeLabel[info.outcome] : stageLabel[info.stage]) : '…'}</span>
                 </span>
               </button>
             </React.Fragment>;
           })}
         </nav>
-        <footer className="wb-rail-foot">
+        <footer className="wb-nav-foot">
           <span className={`wb-live ${scenarios.length ? 'on' : ''}`} />
-          {scenarios.length ? '로컬 Python · SQLite 연결' : '서버 확인 중'}
+          {scenarios.length ? '로컬 Python · SQLite' : '서버 확인 중'}
         </footer>
       </aside>
 
-      <main className="wb-main" aria-busy={busy !== null}>
-        <header className="wb-head">
-          <div className="wb-head-text">
-            <div className="wb-kicker">
-              <Activity size={14} /> {state?.model ? `모델 제안 · ${state.model}` : '결정적 규칙 R0'}
-              {state && <code className="wb-kicker-id" title={state.case_id}>{state.case_id}</code>}
-            </div>
-            <h1>{state?.title || descriptor?.title || '금융 대사 Agent'}</h1>
-            <p>{state?.description || descriptor?.description}</p>
-            {trial && <dl className="wb-context">
-              <div><dt>업무 시각</dt><dd>{kst(trial.as_of)}</dd></div>
-              <div><dt>입력</dt><dd><strong>v{trial.input_version}</strong> <Ref value={trial.input_digest} /></dd></div>
-              <div><dt>배치 · 실행</dt><dd><code>{trial.batch_id}</code> · <code>{trial.run_id}</code></dd></div>
-            </dl>}
-          </div>
+      {/* ── Pane 2 · report document ── */}
+      <main className="wb-doc" aria-busy={busy !== null}>
+        <header className="wb-doc-bar">
+          <FileCheck size={18} className="wb-doc-icon" />
+          <strong className="wb-doc-name">{state ? `${state.case_id}_대사검토` : '대사검토'}</strong>
+          {state && <span className={`wb-doc-status ${stageTone(state.stage, trial?.decision?.outcome)}`}>
+            {state.stage === 'FINAL' ? <Check size={14} /> : <Clock size={14} />}
+            {state.stage === 'FINAL' ? '판정 기록됨' : stageLabel[state.stage] ?? state.stage}
+          </span>}
           <button className="wb-icon" aria-label="최신 상태 다시 읽기" title="최신 상태 다시 읽기"
             onClick={() => fetchCase(selected)} disabled={busy !== null || !scenarios.length}>
-            <RefreshCw size={16} className={busy === 'load' ? 'wb-spin' : ''} />
+            <RefreshCw size={15} className={busy === 'load' ? 'wb-spin' : ''} />
           </button>
         </header>
+        <div className="wb-doc-sub">
+          <strong>금융 대사 Agent</strong>
+          <span>합성 내부 거래 · 외부 정산 · 업무 DB · 호출 원장 · 독립 SQL 검증에서 생성</span>
+        </div>
 
         {error && <div className={`wb-banner ${error === 'NOT_CONNECTED' ? 'danger' : 'warn'}`} role="alert">
           <CircleAlert size={17} />
           <div>
             <strong>{errors[error] || '실행 중 오류가 발생했습니다.'}</strong> <code>{error}</code>
-            {error === 'NOT_CONNECTED' && <p>저장소에서 <code>python3.11 scripts/web.py</code>를 실행하고 표시되는 주소를 여세요.</p>}
-            {error !== 'NOT_CONNECTED' && <p>요청은 자동으로 다시 보내지 않습니다. 화면에는 서버에서 다시 읽은 최신 관측을 표시합니다.</p>}
+            {error === 'NOT_CONNECTED'
+              ? <p>저장소에서 <code>python3.11 scripts/web.py</code>를 실행하고 표시되는 주소를 여세요.</p>
+              : <p>요청은 자동으로 다시 보내지 않습니다. 화면에는 서버에서 다시 읽은 최신 관측을 표시합니다.</p>}
           </div>
           {['STATE_CHANGED', 'RUN_BUSY', 'WORKER_TIMEOUT'].includes(error) &&
             <button className="wb-btn ghost" onClick={() => fetchCase(selected)} disabled={busy !== null}>다시 읽기</button>}
         </div>}
 
-        {state && <section className="wb-ops" aria-label="운영 상황">
-          <div className="wb-next">
-            <div className="wb-next-state">
-              <span className="wb-eyebrow">현재 단계</span>
-              <StagePill stage={state.stage} outcome={trial?.decision?.outcome} />
-              <code className="wb-code-sm">{state.stage}</code>
-            </div>
-            <div className="wb-next-act">
-              <span className="wb-eyebrow">다음 조작</span>
-              <p>{nextHint(primary, state)}</p>
-              <div className="wb-next-buttons">
-                {primary && <ActionButton action={primary} busy={busy === primary} disabled={busy !== null}
-                  onClick={() => primary === 'approve' ? setConfirming(true) : act(primary)} />}
-                {canRestart && <button className="wb-btn ghost" disabled={busy !== null} onClick={() => act('start')}
-                  title="새 trial을 적재합니다. 이전 실험 기록은 보존됩니다.">
-                  {busy === 'start' ? <LoaderCircle size={15} className="wb-spin" /> : <RotateCcw size={15} />} 새 실험
-                </button>}
-              </div>
-            </div>
-          </div>
-          <ol className="wb-flow" aria-label="처리 단계">
-            {flow.map(step => <li key={step.key} className={`wb-step ${step.status}`}
-              aria-current={step.status === 'current' ? 'step' : undefined}>
-              <span className="wb-step-mark"><StepIcon status={step.status} /></span>
-              <span className="wb-step-label">{step.label}</span>
-              <span className="wb-step-note">{step.note}</span>
-            </li>)}
-          </ol>
-        </section>}
+        <article className="wb-paper">
+          <h1 className="wb-title">대사 검토 요약</h1>
+          <p className="wb-period">
+            {state?.title || descriptor?.title || '금융 대사 Agent'}
+            {trial && <> · 업무 시각 {kst(trial.as_of)} · 입력 <strong>v{trial.input_version}</strong> <Ref value={trial.input_digest} /></>}
+          </p>
 
-        {working && <div className="wb-banner info" role="status">
-          <LoaderCircle size={17} className="wb-spin" />
-          <div><strong>{actionLabel[busy as Action]} 요청을 처리하는 중입니다.</strong>
-            <p>Python 작업 프로세스의 응답을 기다립니다. 다른 조작은 잠시 잠깁니다.</p></div>
-        </div>}
+          {state && !trial && <div className="wb-empty">
+            <span className="wb-empty-mark"><Database size={22} /></span>
+            <h2>이 사례는 아직 실행 전입니다</h2>
+            <p>합성 사건 <code>{state.case_id}</code>를 별도 업무 DB에 적재한 뒤 조사 세션을 실행합니다.</p>
+            <ScenarioScript id={state.id} />
+          </div>}
 
-        {last && trial && <LastAction last={last} trial={trial} />}
+          {trial && <>
+            <Kpis trial={trial} />
 
-        {state && !trial && <section className="wb-card wb-empty">
-          <span className="wb-empty-mark"><Database size={22} /></span>
-          <h2>이 사례는 아직 실행 전입니다</h2>
-          <p>합성 사건 <code>{state.case_id}</code>를 별도 업무 DB에 적재한 뒤 조사 세션을 실행합니다.</p>
-          <ScenarioScript id={state.id} />
-        </section>}
+            <section className="wb-section" aria-labelledby="sec-state">
+              <h2 id="sec-state" className="wb-h2">처리 상태</h2>
+              <ol className="wb-flow" aria-label="처리 단계">
+                {steps(trial, trial.stage).map(step => <li key={step.key} className={`wb-step ${step.status}`}
+                  aria-current={step.status === 'current' ? 'step' : undefined}>
+                  <span className="wb-step-mark"><StepIcon status={step.status} /></span>
+                  <span className="wb-step-label">{step.label}</span>
+                  <span className="wb-step-note">{step.note}</span>
+                </li>)}
+              </ol>
+              <StatusBoard trial={trial} last={last} />
+              {trial.stage === 'INTERRUPTED' && <InterruptNote trial={trial} last={last} />}
+              <RecoverySummary trial={trial} />
+              <VersionNote trial={trial} />
+            </section>
 
-        {trial && <>
-          <StatusBoard trial={trial} last={last} />
-          {trial.stage === 'INTERRUPTED' && <InterruptNote trial={trial} last={last} />}
-          <RecoverySummary trial={trial} />
-          <VersionNote trial={trial} />
-          <div className="wb-evidence">
-            <Reconciliation trial={trial} />
-            <DecisionPanel trial={trial} />
-          </div>
-          <Ledger trial={trial} />
-        </>}
+            <section className="wb-section" aria-labelledby="sec-match">
+              <h2 id="sec-match" className="wb-h2">거래 대조 결과</h2>
+              <MatchTable trial={trial} />
+            </section>
+
+            <section className="wb-section" aria-labelledby="sec-exc">
+              <h2 id="sec-exc" className="wb-h2 muted">예외 상세</h2>
+              <Exceptions trial={trial} />
+            </section>
+
+            <section className="wb-section" aria-labelledby="sec-verify">
+              <h2 id="sec-verify" className="wb-h2">판정 · 독립 검증</h2>
+              <DecisionPanel trial={trial} />
+            </section>
+
+            <section className="wb-section" id="audit" aria-labelledby="sec-ledger">
+              <h2 id="sec-ledger" className="wb-h2">세션별 도구 호출 원장</h2>
+              <Ledger trial={trial} />
+            </section>
+          </>}
+        </article>
       </main>
+
+      {/* ── Pane 3 · agent review ── */}
+      <aside className="wb-review" aria-label="Agent 검토">
+        <header className="wb-review-bar">
+          <strong>Agent 검토</strong>
+          <span className="wb-review-mode"><Activity size={13} /> {state?.model ? `모델 제안 · ${state.model}` : '결정적 규칙 R0'}</span>
+        </header>
+        <div className="wb-review-body">
+          {state && <div className="wb-msg">
+            <span className="wb-avatar user"><User size={15} /></span>
+            <div className="wb-msg-text">
+              <span className="wb-msg-who">조사 요청 · 사례 정의</span>
+              <p><code>{state.case_id}</code> 배치의 내부 거래와 외부 정산을 대조하고, 빠진 거래·불일치·중복을 확인한 뒤
+                WAIT · ESCALATE · REPROCESS 중 하나를 제안하세요.</p>
+              <p className="wb-msg-note">{state.description}</p>
+            </div>
+          </div>}
+
+          {state && <div className="wb-msg">
+            <span className="wb-avatar agent"><Bot size={15} /></span>
+            <div className="wb-msg-text">
+              <span className="wb-msg-who">하네스 관측 요약 · 저장된 기록에서 생성</span>
+              {trial ? <>
+                <p>{summarySentence(trial)}</p>
+                <h3>주요 발견</h3>
+                <ul className="wb-findings">{findings(trial).map((f, i) => <li key={i} className={f.tone}>{f.text}</li>)}</ul>
+              </> : <p>아직 조사 세션이 실행되지 않았습니다. 저장된 거래·호출 기록이 없습니다.</p>}
+              <h3>다음 단계</h3>
+              <p>{nextHint(primary, state)}</p>
+              {actions}
+              {working && <p className="wb-working" role="status"><LoaderCircle size={14} className="wb-spin" />
+                {actionLabel[busy as Action]} 요청을 처리하는 중입니다. 다른 조작은 잠시 잠깁니다.</p>}
+              {last && trial && <LastAction last={last} trial={trial} />}
+            </div>
+          </div>}
+
+          {trial && <Sources trial={trial} />}
+          {trial && <Results trial={trial} />}
+        </div>
+      </aside>
 
       <dialog ref={dialog} className="wb-dialog" aria-labelledby="approval-title" aria-describedby="approval-desc"
         onCancel={() => setConfirming(false)} onClose={() => setConfirming(false)}>
@@ -469,11 +533,210 @@ export default function LiveApp() {
   );
 }
 
+/* ───────────────────────── Review panel content ───────────────────────── */
+
+function summarySentence(trial: LiveTrial) {
+  const { ids, flagged } = issues(trial);
+  const base = `거래 ${ids.length}건을 대조했습니다. ${flagged.length ? `${flagged.length}건이 검토 대상입니다.` : '모든 거래가 일치합니다.'}`;
+  if (trial.stage === 'INTERRUPTED') return `${base} 실행이 중단돼 반영 여부를 먼저 확인해야 합니다.`;
+  if (trial.decision) return `${base} 현재 입력에 대한 결정은 ‘${outcomeLabel[trial.decision.outcome] ?? trial.decision.outcome}’입니다.`;
+  return base;
+}
+
+function findings(trial: LiveTrial): { text: string; tone: Tone }[] {
+  const s = trial.summary;
+  const { ids, flagged } = issues(trial);
+  const diff = trial.external_total_krw - trial.internal_total_krw;
+  const out: { text: string; tone: Tone }[] = [];
+  out.push({ text: `거래 ${s.matched_count}/${ids.length}건 일치 (${pct(s.matched_count, ids.length)}).`, tone: flagged.length ? 'neutral' : 'ok' });
+  if (s.mismatched_ids.length) out.push({ text: `금액 불일치 ${s.mismatched_ids.length}건: ${s.mismatched_ids.join(', ')}.`, tone: 'warn' });
+  if (s.missing_external_ids.length) out.push({ text: `외부 정산 미도착 ${s.missing_external_ids.length}건: ${s.missing_external_ids.join(', ')}.`, tone: 'warn' });
+  if (s.duplicate_transaction_ids.length) out.push({ text: `중복 ${s.duplicate_transaction_ids.length}건: ${s.duplicate_transaction_ids.join(', ')}.`, tone: 'warn' });
+  if (s.unexpected_external_ids.length) out.push({ text: `예상 외 외부 기록 ${s.unexpected_external_ids.length}건.`, tone: 'warn' });
+  if (s.unsettled_transaction_ids.length) out.push({ text: `미정산 ${s.unsettled_transaction_ids.length}건.`, tone: 'warn' });
+  out.push({
+    text: diff === 0
+      ? (flagged.length ? '합계 차이 0원이지만 거래별로는 어긋납니다. 합계만으로는 이상이 드러나지 않습니다.' : '합계 차이 0원.')
+      : `합계 차이 ${signed(diff)}원 (외부 − 내부).`,
+    tone: diff === 0 && !flagged.length ? 'ok' : 'warn',
+  });
+  const action = proposedAction(trial);
+  if (action) out.push({ text: `제안 조치 ${action}.`, tone: 'info' });
+  const approval = trial.approvals.filter(a => a.input_version === trial.input_version).at(-1);
+  if (action === 'REPROCESS') out.push({
+    text: approval ? `운영자 승인 레코드 ${approval.status === 'CONSUMED' ? '사용됨' : '기록됨'}.` : '운영자 승인 전 · 업무 쓰기 없음.',
+    tone: approval ? 'ok' : 'info',
+  });
+  if (trial.stage === 'INTERRUPTED') out.push({
+    text: trial.operations.length
+      ? `실행 중단 · DB에는 작업 ${trial.operations.length}건이 커밋돼 있고 최종 결정은 없습니다.`
+      : '실행 중단 · 커밋 전에 종료돼 DB 작업 0건입니다.',
+    tone: 'warn',
+  });
+  const groups = sessions(trial.audit);
+  const recovery = groups.find(g => g.role === 'recovery');
+  if (recovery) out.push({
+    text: `복구 세션: ${recovery.calls.map(c => c.tool_name).join(' → ')} · 쓰기 ${recovery.writes}회.`,
+    tone: 'ok',
+  });
+  if (trial.evaluation) out.push({
+    text: trial.evaluation.passed ? `독립 SQL 검증 ${Object.keys(trial.evaluation.checks).length}개 검사 통과.` : '독립 SQL 검증 실패.',
+    tone: trial.evaluation.passed ? 'ok' : 'danger',
+  });
+  return out;
+}
+
+function SourceRow({ icon, name, meta, status }: { icon: React.ReactNode; name: string; meta: string; status: Tone | 'skip' }) {
+  return <li className="wb-source">
+    <span className="wb-source-icon">{icon}</span>
+    <span className="wb-source-text"><strong>{name}</strong><small>{meta}</small></span>
+    <span className={`wb-source-status ${status}`} aria-label={status === 'ok' ? '확인됨' : status === 'skip' ? '해당 없음' : '확인 필요'}>
+      {status === 'ok' ? <CircleCheck size={17} /> : status === 'skip' ? <CircleMinus size={17} />
+        : status === 'danger' ? <CircleX size={17} /> : status === 'neutral' ? <CircleDashed size={17} /> : <CircleAlert size={17} />}
+    </span>
+  </li>;
+}
+
+function Sources({ trial }: { trial: LiveTrial }) {
+  const groups = sessions(trial.audit);
+  const action = proposedAction(trial);
+  const approvals = trial.approvals.filter(a => a.input_version === trial.input_version);
+  const reserved = trial.audit.some(c => c.status === 'RESERVED') && trial.stage === 'INTERRUPTED';
+  return <section className="wb-side-block">
+    <h3 className="wb-side-title">근거 출처 (5)</h3>
+    <ul className="wb-sources">
+      <SourceRow icon={<Landmark size={16} />} name="내부 거래 원장" meta={`SQLite · ${trial.summary.internal_count}행 · ${won.format(trial.internal_total_krw)}원`} status="ok" />
+      <SourceRow icon={<Receipt size={16} />} name="외부 정산 자료" status={trial.summary.ingestion_complete ? 'ok' : 'warn'}
+        meta={`SQLite · ${trial.summary.external_count}행 · ${trial.summary.ingestion_complete ? '수신 완료' : '일부 미도착'}`} />
+      <SourceRow icon={<UserCheck size={16} />} name="운영자 승인 기록"
+        status={action !== 'REPROCESS' ? 'skip' : approvals.length ? 'ok' : 'neutral'}
+        meta={action !== 'REPROCESS' ? '이 판정에는 승인이 필요 없음' : approvals.length ? `${approvals.length}건 · ${approvals.at(-1)!.status}` : '승인 대기'} />
+      <SourceRow icon={<ListChecks size={16} />} name="도구 호출 원장" status={reserved ? 'warn' : 'ok'}
+        meta={`${trial.audit.length}회 · 세션 ${groups.length}개${reserved ? ' · 응답 기록 없음 1건' : ''}`} />
+      <SourceRow icon={<Scale size={16} />} name="독립 SQL 검증"
+        status={!trial.evaluation ? 'neutral' : trial.evaluation.passed ? 'ok' : 'danger'}
+        meta={!trial.evaluation ? '결과 없음' : trial.evaluation.passed ? `${Object.keys(trial.evaluation.checks).length}개 검사 통과` : '검사 실패'} />
+    </ul>
+  </section>;
+}
+
+function Results({ trial }: { trial: LiveTrial }) {
+  const d = trial.decision;
+  const op = trial.operations.at(-1);
+  const rows: [string, string | null | undefined][] = [
+    ['최종 결정', d?.decision_id], ['업무 작업', op?.operation_id],
+    ['결과 참조', d?.result_ref || op?.result_ref], ['로컬 이관 초안', d?.draft_id],
+  ];
+  return <section className="wb-side-block">
+    <h3 className="wb-side-title">결과</h3>
+    <ul className="wb-results">
+      {rows.map(([k, v]) => <li key={k}>
+        <span>{k}</span>{v ? <Ref value={v} label={k} /> : <span className="wb-empty-cell">—</span>}
+      </li>)}
+    </ul>
+  </section>;
+}
+
+/* ───────────────────────── Report sections ───────────────────────── */
+
+function Kpis({ trial }: { trial: LiveTrial }) {
+  const { ids, flagged } = issues(trial);
+  const diff = trial.external_total_krw - trial.internal_total_krw;
+  const hidden = diff === 0 && flagged.length > 0;
+  return <section className="wb-kpis" aria-label="대사 요약 지표">
+    <div className="wb-kpi ok">
+      <span className="wb-kpi-icon"><CircleCheck size={19} /></span>
+      <div><span className="wb-kpi-label">일치 거래</span>
+        <strong className="wb-kpi-value">{trial.summary.matched_count}<small>/{ids.length}건</small></strong>
+        <span className="wb-kpi-sub">{pct(trial.summary.matched_count, ids.length)} 일치</span></div>
+    </div>
+    <div className={`wb-kpi ${flagged.length ? 'warn' : 'neutral'}`}>
+      <span className="wb-kpi-icon"><TriangleAlert size={19} /></span>
+      <div><span className="wb-kpi-label">검토 필요 예외</span>
+        <strong className="wb-kpi-value">{flagged.length}<small>건</small></strong>
+        <span className="wb-kpi-sub">{flagged.length ? `전체의 ${pct(flagged.length, ids.length)}` : '예외 없음'}</span></div>
+    </div>
+    <div className="wb-kpi info">
+      <span className="wb-kpi-icon"><FileSpreadsheet size={19} /></span>
+      <div><span className="wb-kpi-label">내부 거래 총액</span>
+        <strong className="wb-kpi-value">₩{won.format(trial.internal_total_krw)}</strong>
+        <span className="wb-kpi-sub">외부 ₩{won.format(trial.external_total_krw)}</span></div>
+    </div>
+    <div className={`wb-kpi ${diff || hidden ? 'warn' : 'neutral'}`}>
+      <span className="wb-kpi-icon"><Scale size={19} /></span>
+      <div><span className="wb-kpi-label">합계 차이</span>
+        <strong className="wb-kpi-value">₩{signed(diff)}</strong>
+        <span className="wb-kpi-sub">{diff ? '외부 − 내부' : hidden ? '합계는 같지만 거래 불일치' : '내부 = 외부'}</span></div>
+    </div>
+  </section>;
+}
+
+function MatchTable({ trial }: { trial: LiveTrial }) {
+  const { flag, ids } = issues(trial);
+  return <div className="wb-table-card">
+    {!trial.summary.ingestion_complete && <p className="wb-callout info"><CircleDashed size={14} />
+      외부 정산 자료가 모두 도착하지 않았습니다. 빈 칸은 미수신 상태입니다.</p>}
+    <div className="wb-table-scroll" tabIndex={0} aria-label="거래별 대조 표 (가로 스크롤)">
+      <table className="wb-table">
+        <thead><tr><th scope="col">거래 ID</th><th scope="col" className="num">내부 금액</th><th scope="col" className="num">외부 금액</th>
+          <th scope="col" className="num">차이</th><th scope="col">상태</th><th scope="col">외부 참조</th></tr></thead>
+        <tbody>{ids.map(id => {
+          const left = trial.internal.find(r => r.transaction_id === id);
+          const right = trial.external.filter(r => r.transaction_id === id);
+          const rightSum = right.reduce((sum, r) => sum + r.amount_krw, 0);
+          const diff = left && right.length ? rightSum - left.amount_krw : null;
+          const issue = flag.get(id);
+          return <tr key={id} className={issue ? 'is-flag' : ''}>
+            <th scope="row"><code>{id}</code></th>
+            <td className="num">{left ? `₩${won.format(left.amount_krw)}` : <span className="wb-empty-cell">—</span>}</td>
+            <td className="num">{right.length ? right.map(r => `₩${won.format(r.amount_krw)}`).join(' · ') : <span className="wb-empty-cell">—</span>}</td>
+            <td className={`num ${diff ? 'warn-text' : ''}`}>{diff === null ? <span className="wb-empty-cell">—</span> : signed(diff)}</td>
+            <td><span className={`wb-status ${issueTone(issue)}`}><span className="wb-status-dot" />{issue ?? '일치'}</span></td>
+            <td>{right.length ? <code>{right.map(r => r.external_id).join(' · ')}</code> : <span className="wb-empty-cell">—</span>}</td>
+          </tr>;
+        })}</tbody>
+        <tfoot><tr><th scope="row">합계</th><td className="num">₩{won.format(trial.internal_total_krw)}</td>
+          <td className="num">₩{won.format(trial.external_total_krw)}</td>
+          <td className={`num ${trial.external_total_krw - trial.internal_total_krw ? 'warn-text' : ''}`}>{signed(trial.external_total_krw - trial.internal_total_krw)}</td>
+          <td colSpan={2} className="wb-muted">단위 원(KRW) · 빈 값 —</td></tr></tfoot>
+      </table>
+    </div>
+  </div>;
+}
+
+function Exceptions({ trial }: { trial: LiveTrial }) {
+  const { flag, flagged } = issues(trial);
+  if (!flagged.length) return <p className="wb-none"><CircleCheck size={15} className="ok-text" /> 검토가 필요한 예외가 없습니다.</p>;
+  const d = trial.decision;
+  return <div className="wb-exceptions">{flagged.map(id => {
+    const issue = flag.get(id)!;
+    const left = trial.internal.find(r => r.transaction_id === id);
+    const right = trial.external.filter(r => r.transaction_id === id);
+    const rightSum = right.reduce((sum, r) => sum + r.amount_krw, 0);
+    const explain = issue === '금액 불일치' && left
+      ? `내부 ₩${won.format(left.amount_krw)} / 외부 ₩${won.format(rightSum)} · 차이 ${signed(rightSum - left.amount_krw)}원. 거래별 금액이 맞지 않습니다.`
+      : issue === '미도착' ? '외부 정산 기록이 아직 도착하지 않았습니다. 자료가 모두 도착할 때까지 재처리하지 않습니다.'
+      : issue === '중복' ? '같은 거래 ID의 외부 기록이 둘 이상입니다.'
+      : issue === '예상 외' ? '내부 거래에 없는 외부 기록입니다.' : '정산이 확정되지 않은 거래입니다.';
+    return <article key={id} className={`wb-exception ${issueTone(issue)}`}>
+      <div className="wb-exception-head">
+        <span className="wb-exception-icon"><FileText size={17} /></span>
+        <div><strong>{id} · {issue}</strong><small>{left ? `내부 ₩${won.format(left.amount_krw)}` : '내부 기록 없음'}</small></div>
+      </div>
+      <p className="wb-exception-text">{explain}</p>
+      <div className="wb-exception-link">
+        {d?.draft_id ? <><span>로컬 이관 초안에 포함</span><Ref value={d.draft_id} label="이관 초안" /></>
+          : d?.outcome === 'WAITING_FOR_INPUT' ? <span className="wb-tag info">자료 대기 결정에 반영</span>
+          : <span className="wb-tag neutral">결정 대기</span>}
+      </div>
+    </article>;
+  })}</div>;
+}
+
 /* ───────────────────────── Components ───────────────────────── */
 
 function stageTone(stage?: string, outcome?: string): Tone {
-  if (outcome === 'REPROCESSED') return 'ok';
-  if (outcome === 'WAITING_FOR_INPUT' || outcome === 'ESCALATED') return 'ok';
+  if (outcome) return 'ok';
   if (stage === 'INTERRUPTED') return 'warn';
   if (stage === 'PAUSED_FOR_APPROVAL' || stage === 'APPROVED') return 'info';
   return 'neutral';
@@ -481,11 +744,6 @@ function stageTone(stage?: string, outcome?: string): Tone {
 
 function StageDot({ stage, outcome }: { stage?: string; outcome?: string }) {
   return <span className={`wb-dot ${stageTone(stage, outcome)}`} aria-hidden="true" />;
-}
-
-function StagePill({ stage, outcome }: { stage: string; outcome?: string }) {
-  const text = stage === 'FINAL' && outcome ? `${stageLabel.FINAL} · ${outcomeLabel[outcome] ?? outcome}` : stageLabel[stage] ?? stage;
-  return <span className={`wb-pill ${stageTone(stage, outcome)}`}>{text}</span>;
 }
 
 function StepIcon({ status }: { status: Step['status'] }) {
@@ -533,8 +791,8 @@ function LastAction({ last, trial }: { last: ActionResult & { action: Action }; 
     text = `서버 응답 ${last.status}${last.reason ? ` · ${last.reason}` : ''}`;
   }
   return <div className={`wb-last ${tone}`} role="status">
-    <span className="wb-eyebrow">직전 조작</span>
-    <strong>{actionLabel[last.action]}</strong><ArrowRight size={13} /><span>{text}</span>
+    <span className="wb-eyebrow">직전 조작 · {actionLabel[last.action]}</span>
+    <span>{text}</span>
   </div>;
 }
 
@@ -556,17 +814,16 @@ function Fact({ k, children }: { k: string; children: React.ReactNode }) {
 function StatusBoard({ trial, last }: { trial: LiveTrial; last: (ActionResult & { action: Action }) | null }) {
   const reserved = trial.audit.filter(c => c.status === 'RESERVED' && c.run_id === trial.run_id).at(-1);
   const approval = trial.approvals.filter(a => a.input_version === trial.input_version).at(-1);
-  const op = trial.operations.at(-1);
   const stage = trial.stage;
 
-  const run = {
+  const run = ({
     NEW: ['실행 전', 'neutral', '조사 세션이 아직 없습니다.'],
     READY: ['조사 준비', 'neutral', '조사 세션을 실행할 수 있습니다.'],
     PAUSED_FOR_APPROVAL: ['승인 대기', 'info', '조사 세션이 제안 후 멈췄습니다. 쓰기 호출은 없습니다.'],
     APPROVED: ['실행 대기', 'info', '승인이 기록됐고 실행 세션은 아직 시작되지 않았습니다.'],
     INTERRUPTED: ['중단', 'warn', last?.exit_code ? `작업 프로세스가 응답 전에 종료됐습니다 (exit ${last.exit_code}).` : '완료 응답이 원장에 남지 않은 호출이 있습니다.'],
     FINAL: ['판정 기록 완료', 'ok', '현재 입력에 대한 최종 결정을 저장했습니다.'],
-  }[stage] as [string, Tone, string] ?? [stage, 'neutral', ''];
+  } as Record<string, [string, Tone, string]>)[stage] ?? [stage, 'neutral', ''];
 
   const effectTone: Tone = trial.operations.length ? (stage === 'INTERRUPTED' ? 'info' : 'ok') : 'neutral';
   const effectSub = trial.operations.length
@@ -582,18 +839,17 @@ function StatusBoard({ trial, last }: { trial: LiveTrial; last: (ActionResult & 
     : ev.passed ? ['통과', 'ok', `${checks.length}개 검사 모두 통과 · 기대 ${ev.expected_outcome ?? '—'} = 관측 ${ev.observed_outcome ?? '—'}`]
     : ['실패', 'danger', `${checks.filter(x => !x).length}개 검사 실패 · 기대 ${ev.expected_outcome ?? '—'} / 관측 ${ev.observed_outcome ?? '—'}`];
 
-  return <section className="wb-board" aria-label="상태 보드">
+  return <div className="wb-board" aria-label="상태 보드">
     <Lens title="실행 상태 · 하네스" icon={<Activity size={15} />} tone={run[1]} value={run[0]} sub={run[2]}>
       <Fact k="stage"><code>{stage}</code></Fact>
       {reserved && stage === 'INTERRUPTED' && <Fact k="응답 기록 없음"><code>{reserved.tool_name}</code></Fact>}
       <Fact k="호출 예산">{trial.budget.used} / {trial.budget.max_attempts}</Fact>
     </Lens>
     <Lens title="업무 효과 · SQLite" icon={<Database size={15} />} tone={effectTone}
-      value={trial.operations.length ? `작업 ${trial.operations.length}건` : '작업 0건'} sub={effectSub}>
+      value={`작업 ${trial.operations.length}건`} sub={effectSub}>
       <Fact k="거래별 결과">{trial.result_count}행</Fact>
       <Fact k="승인">{approval ? `${approval.status === 'CONSUMED' ? '사용됨' : '기록됨'} · v${approval.input_version}` : '기록 없음'}</Fact>
-      {op && <Fact k="결과 참조"><Ref value={op.result_ref} label="결과 참조" /></Fact>}
-      <Fact k="배치 상태"><code>{trial.processing_state}</code></Fact>
+      <Fact k="배치 처리 상태"><code>{trial.processing_state}</code></Fact>
     </Lens>
     <Lens title="최종 결정" icon={<FileText size={15} />} tone={trial.decision ? 'ok' : stage === 'INTERRUPTED' ? 'warn' : 'neutral'}
       value={trial.decision ? (outcomeLabel[trial.decision.outcome] ?? trial.decision.outcome) : trial.decision_count ? '현재 결정 없음' : '결정 0건'}
@@ -603,12 +859,12 @@ function StatusBoard({ trial, last }: { trial: LiveTrial; last: (ActionResult & 
       <Fact k="trial 저장 결정">{trial.decision_count}건</Fact>
     </Lens>
     <Lens title="독립 검증 · SQL" icon={<Scale size={15} />} tone={evalLens[1]} value={evalLens[0]} sub={evalLens[2]} />
-  </section>;
+  </div>;
 }
 
 function InterruptNote({ trial, last }: { trial: LiveTrial; last: (ActionResult & { action: Action }) | null }) {
   const committed = trial.operations.length > 0;
-  return <div className="wb-banner warn wb-interrupt" role="status">
+  return <div className="wb-banner warn" role="status">
     <TriangleAlert size={18} />
     <div>
       <strong>실행은 중단됐고, 업무 효과는 {committed ? 'DB에 반영돼 있습니다' : 'DB에 남지 않았습니다'}.</strong>
@@ -629,7 +885,7 @@ function RecoverySummary({ trial }: { trial: LiveTrial }) {
   if (!recovery || !broken) return null;
   const sameRef = trial.decision?.result_ref && trial.operations.length === 1 && trial.decision.result_ref === trial.operations[0].result_ref;
   const reexecuted = recovery.calls.some(c => c.tool_name === 'execute_reprocess' && c.status === 'success');
-  return <section className="wb-card wb-recovery" aria-label="복구 요약">
+  return <div className="wb-recovery" aria-label="복구 요약">
     <div className="wb-recovery-side">
       <span className="wb-eyebrow">세션 {broken.index} · {roleLabel[broken.role]}</span>
       <strong className="warn-text">쓰기 시도 {broken.writes}회</strong>
@@ -648,8 +904,9 @@ function RecoverySummary({ trial }: { trial: LiveTrial }) {
       <strong>최종 작업 {trial.operations.length}건</strong>
       <p>{reexecuted ? '미반영을 확인했기 때문에 같은 의도로 한 번 실행했습니다.'
         : sameRef ? '중단 전에 커밋된 작업과 같은 결과 참조를 회수했습니다.' : '저장된 작업을 확인했습니다.'}</p>
+      {sameRef && <span className="wb-tag ok"><Check size={11} strokeWidth={3} /> 결과 참조 동일</span>}
     </div>
-  </section>;
+  </div>;
 }
 
 function VersionNote({ trial }: { trial: LiveTrial }) {
@@ -684,68 +941,10 @@ function VersionNote({ trial }: { trial: LiveTrial }) {
   </div>;
 }
 
-function Reconciliation({ trial }: { trial: LiveTrial }) {
-  const s = trial.summary;
-  const flag = new Map<string, string>();
-  for (const id of s.unsettled_transaction_ids) flag.set(id, '미정산');
-  for (const id of s.duplicate_transaction_ids) flag.set(id, '중복');
-  for (const id of s.unexpected_external_ids) flag.set(id, '예상 외');
-  for (const id of s.missing_external_ids) flag.set(id, '미도착');
-  for (const id of s.mismatched_ids) flag.set(id, '금액 불일치');
-  const ids = [...new Set([...trial.internal, ...trial.external].map(r => r.transaction_id))].sort();
-  const diffTotal = trial.external_total_krw - trial.internal_total_krw;
-  const totalsMatch = diffTotal === 0;
-  const flagged = ids.filter(id => flag.has(id)).length;
-
-  return <section className="wb-card wb-recon" aria-label="대사 근거">
-    <h2 className="wb-card-title"><Scale size={16} /> 내부 거래 · 외부 정산 대조</h2>
-    <div className="wb-totals">
-      <div><span>내부 합계</span><strong>{won.format(trial.internal_total_krw)}</strong><small>원 · {s.internal_count}건</small></div>
-      <div><span>외부 합계</span><strong>{won.format(trial.external_total_krw)}</strong><small>원 · {s.external_count}건</small></div>
-      <div className={totalsMatch ? '' : 'warn'}><span>합계 차이</span><strong>{diffTotal > 0 ? '+' : ''}{won.format(diffTotal)}</strong><small>원</small></div>
-      <div className={flagged ? 'warn' : 'ok'}><span>거래별 대조</span><strong>{s.matched_count}/{ids.length}</strong><small>일치 · 이상 {flagged}건</small></div>
-    </div>
-    {totalsMatch && flagged > 0 && <p className="wb-callout warn"><TriangleAlert size={14} />
-      합계는 일치하지만 거래 {flagged}건이 어긋납니다. 합계만으로는 이상을 찾을 수 없습니다.</p>}
-    {!s.ingestion_complete && <p className="wb-callout info"><CircleDashed size={14} />
-      외부 정산 자료가 모두 도착하지 않았습니다. 빈 칸은 미수신 상태입니다.</p>}
-    <div className="wb-table-scroll" tabIndex={0} aria-label="거래별 대조 표 (가로 스크롤)">
-      <table className="wb-table">
-        <thead><tr><th scope="col">거래 ID</th><th scope="col" className="num">내부 금액</th><th scope="col" className="num">외부 금액</th>
-          <th scope="col" className="num">차이</th><th scope="col">외부 ID</th><th scope="col">대조</th></tr></thead>
-        <tbody>{ids.map(id => {
-          const left = trial.internal.find(r => r.transaction_id === id);
-          const right = trial.external.filter(r => r.transaction_id === id);
-          const rightSum = right.reduce((sum, r) => sum + r.amount_krw, 0);
-          const diff = left && right.length ? rightSum - left.amount_krw : null;
-          const issue = flag.get(id);
-          return <tr key={id} className={issue ? 'is-flag' : ''}>
-            <th scope="row"><code>{id}</code></th>
-            <td className="num">{left ? won.format(left.amount_krw) : <span className="wb-empty-cell">—</span>}</td>
-            <td className="num">{right.length ? right.map(r => won.format(r.amount_krw)).join(' · ') : <span className="wb-empty-cell">—</span>}</td>
-            <td className={`num ${diff ? 'warn-text' : ''}`}>{diff === null ? <span className="wb-empty-cell">—</span> : `${diff > 0 ? '+' : ''}${won.format(diff)}`}</td>
-            <td>{right.length ? right.map(r => r.external_id).join(' · ') : <span className="wb-empty-cell">—</span>}</td>
-            <td><span className={`wb-tag ${issue ? 'warn' : 'ok'}`}>{issue ?? '일치'}</span></td>
-          </tr>;
-        })}</tbody>
-        <tfoot><tr><th scope="row">합계</th><td className="num">{won.format(trial.internal_total_krw)}</td>
-          <td className="num">{won.format(trial.external_total_krw)}</td>
-          <td className={`num ${diffTotal ? 'warn-text' : ''}`}>{diffTotal > 0 ? '+' : ''}{won.format(diffTotal)}</td><td colSpan={2} className="wb-muted">단위 원(KRW) · 빈 값 —</td></tr></tfoot>
-      </table>
-    </div>
-    {trial.decision?.draft_id && flagged > 0 && <p className="wb-link-note">
-      <ArrowRight size={13} /> 표시된 {flagged}건은 로컬 이관 초안 <Ref value={trial.decision.draft_id} label="이관 초안" />에 연결됩니다.
-    </p>}
-  </section>;
-}
-
 function DecisionPanel({ trial }: { trial: LiveTrial }) {
   const d = trial.decision;
   const ev = trial.evaluation;
-  const op = trial.operations.at(-1);
-  const sameRef = d?.result_ref && op && d.result_ref === op.result_ref;
-  return <section className="wb-card wb-decision" aria-label="판정과 독립 검증">
-    <h2 className="wb-card-title"><FileText size={16} /> 판정 · 결과 · 독립 검증</h2>
+  return <div className="wb-decision">
     <div className="wb-decision-head">
       {d ? <>
         <span className={`wb-tag ${d.outcome === 'REPROCESSED' ? 'ok' : 'info'}`}>{outcomeAction[d.outcome] ?? d.outcome}</span>
@@ -758,16 +957,6 @@ function DecisionPanel({ trial }: { trial: LiveTrial }) {
       </>}
       {trial.model_advice && <p className="wb-model">로컬 모델 제안 <code>{trial.model_advice}</code> · 코드 판정과 별도 기록</p>}
     </div>
-    <dl className="wb-refs">
-      {op && <div><dt>작업 참조</dt><dd><Ref value={op.operation_id} label="작업 참조" /></dd></div>}
-      {(d?.result_ref || op?.result_ref) && <div><dt>결과 참조</dt><dd>
-        <Ref value={(d?.result_ref || op?.result_ref)!} label="결과 참조" />
-        {sameRef && <span className="wb-tag ok"><Check size={11} strokeWidth={3} /> DB 작업과 동일</span>}
-      </dd></div>}
-      {d?.draft_id && <div><dt>로컬 이관 초안</dt><dd><Ref value={d.draft_id} label="이관 초안" /></dd></div>}
-      {d && <div><dt>결정 ID</dt><dd><Ref value={d.decision_id} label="결정 ID" /></dd></div>}
-      {d?.evidence_ref && <div><dt>근거 다이제스트</dt><dd><Ref value={d.evidence_ref} label="근거 다이제스트" /></dd></div>}
-    </dl>
     <div className="wb-checks">
       <div className="wb-checks-head">
         <span>독립 검증</span>
@@ -778,14 +967,13 @@ function DecisionPanel({ trial }: { trial: LiveTrial }) {
         <span>{checkLabels[name] || name}</span><code>{name}</code>
       </li>)}</ul> : <p className="wb-muted"><CircleMinus size={14} /> 검증 결과 없음 (<code>evaluation = null</code>)</p>}
     </div>
-  </section>;
+  </div>;
 }
 
 function Ledger({ trial }: { trial: LiveTrial }) {
   const groups = sessions(trial.audit);
   const max = Math.max(trial.budget.max_attempts, trial.budget.used, 1);
-  return <section className="wb-card wb-ledger" id="audit" aria-label="세션별 도구 호출 기록">
-    <h2 className="wb-card-title"><Terminal size={16} /> 세션별 도구 호출 원장</h2>
+  return <div className="wb-ledger">
     <div className="wb-budget">
       <div className="wb-budget-text">
         <span>호출 예산</span><strong>{trial.budget.used} / {trial.budget.max_attempts}</strong>
@@ -816,7 +1004,7 @@ function Ledger({ trial }: { trial: LiveTrial }) {
               return <tr key={call.call_id} className={reserved ? 'is-flag' : ''}>
                 <th scope="row"><code>{call.tool_name}</code></th>
                 <td><span className={`wb-kind ${write ? 'write' : 'read'}`}>{write ? '쓰기' : '읽기'}</span></td>
-                <td><span className={`wb-tag ${call.status === 'success' ? 'ok' : reserved ? 'warn' : 'danger'}`}>
+                <td><span className={`wb-status ${call.status === 'success' ? 'ok' : reserved ? 'warn' : 'danger'}`}><span className="wb-status-dot" />
                   {reserved ? '응답 기록 없음' : call.status === 'success' ? '성공' : call.status}</span>
                   {call.code && <code className="wb-err">{call.code}</code>}</td>
                 <td className="num">{call.elapsed_ms === null ? <span className="wb-empty-cell">—</span> : `${call.elapsed_ms} ms`}</td>
@@ -826,7 +1014,7 @@ function Ledger({ trial }: { trial: LiveTrial }) {
         </div>
       </article>)}
     </div>
-  </section>;
+  </div>;
 }
 
 function ScenarioScript({ id }: { id: string }) {
