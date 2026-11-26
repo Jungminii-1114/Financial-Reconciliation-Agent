@@ -1,6 +1,6 @@
 # TOOL-06 · prepare_escalation — 근거가 있는 이관 초안 구성
 
-> **설계 초안 / 미구현**. 모델 등록 이름: `prepare_escalation` · 범위 제한 아티팩트 작성, 업무 입력 변경 없음 · 주 사용 노드: [N-15](../small-nodes/N-15.md)
+> **로컬 MVP 구현 · 아래 예시는 전체 목표 계약**. 모델 등록 이름: `prepare_escalation` · 범위 제한 아티팩트 작성, 업무 입력 변경 없음 · 주 사용 노드: [N-15](../small-nodes/N-15.md)
 >
 > [Tool 목록·공통 규칙](README.md) · [업무 DB](../contracts/business-data.md) · [보안](../contracts/security-boundary.md)
 
@@ -9,7 +9,7 @@
 확인된 불일치·미확정 상태·실행 제한을 구조화된 보고 초안으로 만든다. 이메일·메신저·실제 담당자에게 자동 발송하지 않는다.
 
 - 내부 Python 계약: `prepare_escalation(request: ToolRequest, ctx: TrustedCallContext) -> NodeResult[ToolData]`.
-- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/escalation-drafts`. 실제 API·Python 타입은 아직 구현하지 않았다.
+- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/escalation-drafts`. MVP는 [로컬 CLI](../mvp.md)와 Python dispatcher를 사용한다.
 - ctx는 서버 생성 값이며 모델 payload에 포함하지 않는다. 경로와 body에 같은 case/batch가 있으면 반드시 일치시킨다.
 
 ## 2. 요청 필드

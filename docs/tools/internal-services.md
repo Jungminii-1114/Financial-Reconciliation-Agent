@@ -1,6 +1,6 @@
 # 하네스 내부 서비스 — 모델 Tool과 분리
 
-> 설계 초안 / 미구현. 이 함수들은 6개 업무 Tool을 늘리는 것이 아니다. 하네스·승인 주체·평가 컨트롤러의 코드 전용 기능이다. [구조](../overall-plan/architecture.md) · [Tool 목록](README.md)
+> 내부 서비스의 목표 계약. 승인 발급·의도 저장·효과 확인·최종 결정은 [로컬 MVP](../mvp.md)에서 실행할 수 있다. 이 함수들은 6개 업무 Tool을 늘리는 것이 아니다. 하네스·승인 주체·평가 컨트롤러의 코드 전용 기능이다. [구조](../overall-plan/architecture.md) · [Tool 목록](README.md)
 
 ## 1. Dispatcher·권한 외피
 

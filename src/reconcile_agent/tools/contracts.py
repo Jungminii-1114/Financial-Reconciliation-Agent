@@ -69,3 +69,13 @@ def validate_context(ctx: TrustedCallContext) -> None:
         valid = valid and isinstance(ctx.server_now, datetime) and ctx.server_now.tzinfo is not None and ctx.server_now.utcoffset() is not None
     if not valid:
         raise ToolError("SCOPE_DENIED", "서버 호출 문맥이 올바르지 않습니다.")
+
+
+def resolve_target(ctx: TrustedCallContext, tool_name: str, case_id: str, batch_id: str):
+    from .errors import ToolError
+    from ..business.repository import BusinessScope
+
+    validate_context(ctx)
+    if tool_name not in ctx.allowed_tools or TargetScope(case_id, batch_id) not in ctx.allowed_targets:
+        raise ToolError("SCOPE_DENIED", "허용되지 않은 호출입니다.")
+    return BusinessScope(ctx.principal_id, ctx.trial_id, case_id, batch_id)

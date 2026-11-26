@@ -1,6 +1,6 @@
 # 지속 상태·작업 의도·중단 후 복구
 
-> v0.1 설계. [B-04](../big-nodes/B-04.md) · [TOOL-04](../tools/TOOL-04.md) · [TOOL-05](../tools/TOOL-05.md)
+> 복구 목표 계약 v0.1. [로컬 MVP 검증 범위](../mvp.md). [B-04](../big-nodes/B-04.md) · [TOOL-04](../tools/TOOL-04.md) · [TOOL-05](../tools/TOOL-05.md)
 
 ## 1. 세 가지 저장을 구분한다
 

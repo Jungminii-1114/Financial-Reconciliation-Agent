@@ -1,6 +1,6 @@
 # TOOL-05 · get_operation — 작업 효과·결과·재시도 조건 조회
 
-> **설계 초안 / 미구현**. 모델 등록 이름: `get_operation` · 업무 읽기 · 주 사용 노드: [N-12](../small-nodes/N-12.md) · [N-13](../small-nodes/N-13.md)
+> **로컬 MVP 구현 · 아래 예시는 전체 목표 계약**. 모델 등록 이름: `get_operation` · 업무 읽기 · 주 사용 노드: [N-12](../small-nodes/N-12.md) · [N-13](../small-nodes/N-13.md)
 >
 > [Tool 목록·공통 규칙](README.md) · [업무 DB](../contracts/business-data.md) · [보안](../contracts/security-boundary.md)
 
@@ -9,7 +9,7 @@
 중단 전 작업의 실제 처리 상태와 결과를 조회한다. 단순 404를 확정 미반영으로 바꾸지 않는다.
 
 - 내부 Python 계약: `get_operation(request: ToolRequest, ctx: TrustedCallContext) -> NodeResult[ToolData]`.
-- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/operation-lookups`. 실제 API·Python 타입은 아직 구현하지 않았다.
+- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/operation-lookups`. MVP는 [로컬 CLI](../mvp.md)와 Python dispatcher를 사용한다.
 - ctx는 서버 생성 값이며 모델 payload에 포함하지 않는다. 경로와 body에 같은 case/batch가 있으면 반드시 일치시킨다.
 
 ## 2. 요청 필드

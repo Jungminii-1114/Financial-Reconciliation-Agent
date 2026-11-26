@@ -8,13 +8,13 @@
 
 > 금융 대사 Agent가 실행 중단과 악성 외부 지시를 겪어도, 실제 처리 결과를 검증하고 정해진 권한 안에서 업무를 이어가도록 하네스를 설계하고 평가합니다.
 
-**프로젝트 상태:** 개발 중입니다. 합성 데이터 생성·검사·열람, 버전 지정 업무 DB 적재 어댑터, 명시적 재개, 범위가 제한된 읽기 저장소, 원자적 도착·정정 사건 적용까지 구현했습니다. TOOL-01 get_case와 호출 예산·감사 기록을 보존하는 로컬 dispatcher를 구현했습니다. TOOL-02~06, Agent, 승인·재처리 서비스, 실제 프로세스 복구 하네스, 인젝션 방어와 결과 평가는 계획이며 Agent 성능 결과는 아직 없습니다.
+**프로젝트 상태:** 합성 데이터 기반 로컬 MVP를 실행할 수 있습니다. 여섯 업무 도구, 규칙 기반 판단, 선택적 로컬 모델 제안, 운영자 승인, 원자적 재처리, 프로세스 재개 및 독립 SQL 검증을 제공합니다. `python3.11 scripts/mvp.py demo --out generated_data/mvp-demo`로 실행합니다. [MVP 사용 가이드](../docs/mvp.md)
 
 **지금 실행할 수 있는 것:** [자체 합성기 v1: 한 명령 실행·사용 설명서 →](../docs/data-generation/README.md) · [교육용 6사례 예제](../examples/synthetic_data_starter/README.md) · [업무 DB 적재 어댑터: 준비·조회·재개 →](../docs/data-adapter/README.md)
 
 **상세 설계 문서:** [Overall Plan](../docs/README.md) · [Big Node](../docs/big-nodes/README.md) · [Small Node](../docs/small-nodes/README.md) · [Tool 명세](../docs/tools/README.md)
 
-**웹 UI 프로토타입:** [실행 방법](../web/README.md) · 모의 업무 화면과 기록된 테스트 결과를 볼 수 있습니다. Python/SQLite API 연결은 후속 단계입니다.
+**웹 워크벤치:** `python3.11 scripts/web.py`로 브라우저에서 사례 조사, 승인, 실제 Python 프로세스 중단·복구, 독립 검증을 실행할 수 있습니다. [웹 실행 가이드](../web/README.md)
 
 ## Overview
 
@@ -56,7 +56,7 @@ Agent는 한국어 요청을 해석하고 증거를 조사합니다. **하네스
 | 합성 데이터 | Python 표준 라이브러리·고정 시드·시간 이벤트·정상/공격 쌍 | 구현 |
 | 데이터 검사·열람 | 독립 SQLite 대조·HTML 미리보기·열람용 DB 출력 | 구현 |
 | 실험 저장소·입력 사건 | Python sqlite3·버전 지정 적재·과거 이력·역할별 DB | 구현; [사용 설명서](../docs/data-adapter/README.md) |
-| 업무 서비스 | TOOL-01·Python dispatcher·지속 호출 기록; 나머지 Tool·승인·재처리 | TOOL-01 구현; [사용 설명서](../docs/tools/get-case-usage.md) |
+| 업무 서비스 | 여섯 Python 업무 도구, 호출 예산·감사 기록, 운영자 승인과 재처리 | [로컬 MVP](../docs/mvp.md) · [Tool 계약](../docs/tools/README.md) |
 | 지속 실행 | LangGraph와 지속 체크포인트 | 계획 |
 | 추론 | Colab GPU, Qwen3-4B-Instruct-2507을 첫 후보로 검토 | 파일럿 필요 |
 | 결과 평가 | Python·SQL·pytest·구조화 실행 로그 | 계획 |

@@ -1,6 +1,6 @@
 # TOOL-04 · execute_reprocess — 승인된 대사 결과 생성·멱등 재요청
 
-> **설계 초안 / 미구현**. 모델 등록 이름: `execute_reprocess` · 업무 쓰기 · 주 사용 노드: [N-11](../small-nodes/N-11.md)
+> **로컬 MVP 구현 · 아래 예시는 전체 목표 계약**. 모델 등록 이름: `execute_reprocess` · 업무 쓰기 · 주 사용 노드: [N-11](../small-nodes/N-11.md)
 >
 > [Tool 목록·공통 규칙](README.md) · [업무 DB](../contracts/business-data.md) · [보안](../contracts/security-boundary.md)
 
@@ -9,7 +9,7 @@
 등록된 승인과 현재 입력이 일치하는 경우에만 대사 결과를 생성한다. 작업·결과·승인 소비를 하나의 업무 transaction으로 반영한다.
 
 - 내부 Python 계약: `execute_reprocess(request: ToolRequest, ctx: TrustedCallContext) -> NodeResult[ToolData]`.
-- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/batches/{batch_id}/reprocess`. 실제 API·Python 타입은 아직 구현하지 않았다.
+- 선택적 HTTP 어댑터: `POST /v1/cases/{case_id}/batches/{batch_id}/reprocess`. MVP는 [로컬 CLI](../mvp.md)와 Python dispatcher를 사용한다.
 - ctx는 서버 생성 값이며 모델 payload에 포함하지 않는다. 경로와 body에 같은 case/batch가 있으면 반드시 일치시킨다.
 
 ## 2. 요청 필드

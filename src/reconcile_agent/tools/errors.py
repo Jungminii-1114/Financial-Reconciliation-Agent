@@ -18,7 +18,10 @@ def map_tool_error(error: Exception) -> ToolError:
     if isinstance(error, AdapterError):
         codes = {"SCOPE_DENIED", "CASE_UNAVAILABLE", "TOOL_TIMEOUT", "SQLITE_BUSY",
                  "CONTENT_INTEGRITY_ERROR", "IMPORT_INVARIANT_ERROR", "BUSINESS_SCHEMA_MISMATCH",
-                 "OUTPUT_LIMIT_EXCEEDED", "TRIAL_MISSING", "STORAGE_ERROR", "ASOF_OUT_OF_RANGE"}
+                 "OUTPUT_LIMIT_EXCEEDED", "TRIAL_MISSING", "STORAGE_ERROR", "ASOF_OUT_OF_RANGE",
+                 "VERSION_CONFLICT", "SNAPSHOT_INCOMPLETE", "WRONG_RESULT_BINDING", "NOT_ELIGIBLE",
+                 "APPROVAL_REQUIRED", "APPROVAL_STALE", "IDEMPOTENCY_CONFLICT", "EFFECT_UNKNOWN",
+                 "VERIFICATION_FAILED"}
         if error.code in codes:
             return ToolError(error.code, "업무 저장소 검사를 완료하지 못했습니다.",
                              retryable=error.code in {"TOOL_TIMEOUT", "SQLITE_BUSY"})

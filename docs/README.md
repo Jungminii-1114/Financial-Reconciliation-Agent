@@ -4,6 +4,8 @@
 >
 > Engineering specifications are written in Korean; stable IDs and API names use English. Main README: [English](../README.md) · [한국어](../readme/README.ko.md).
 
+[로컬 MVP 재현 및 실행 가이드](mvp.md)에서 5개 사례와 프로세스 중단 후 재개를 실행할 수 있다.
+
 ## 읽는 순서
 
 | 순서 | 문서 | 답하는 질문 |

@@ -1,6 +1,6 @@
 # 업무 Tool 공통 호출 계약 — tool-call-1
 
-> **설계 초안 / 미구현 · 2026-11-10.** TOOL-01을 구현하기 전에 정하는 Python 서비스 경계다. 이 문서의 타입·호출 기록·검증 사례는 구현 결과가 아니다. 기존 [NodeResult](../small-nodes/common-result-contract.md)의 네 필드를 유지하면서 호출·권한·오류·기록 규칙을 구체화한다.
+> **공통 호출 목표 계약.** 기존 [NodeResult](../small-nodes/common-result-contract.md)의 네 필드를 유지하면서 호출·권한·오류·기록 규칙을 정의한다. 현재 여섯 도구가 사용하는 호출 경로와 실제 검증 범위는 [로컬 MVP](../mvp.md)를 참고한다.
 >
 > [문서 홈](../README.md) · [Tool 목록](../tools/README.md) · [TOOL-01](../tools/TOOL-01.md) · [내부 서비스](../tools/internal-services.md) · [보안 경계](security-boundary.md) · [복구](persistence-and-recovery.md)
 

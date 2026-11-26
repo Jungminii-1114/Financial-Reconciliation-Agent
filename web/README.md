@@ -1,54 +1,37 @@
-# Financial Reconciliation — Web UI Prototype
+# Financial Reconciliation · 로컬 워크벤치
 
-다운로드한 `financial_reconciliation_agent.tsx`의 화면 구성을 유지하며 실행 환경과 인터랙션을 보완한 React 프로토타입이다. Python Agent와 연결할 화면 설계를 검토하기 위한 웹이다.
-
-**현재 브라우저는 Python·SQLite API에 연결되지 않는다.** Cases·Agent·Recovery·역할·감사 항목은 로컬 UI 예시이며, Evaluations만 저장소에 기록된 실제 검증 자료의 정적 사본을 표시한다. 모의 승인·복구 버튼은 React 상태만 바꾼다.
+React 화면에서 기존 Python MVP를 실행한다. 사례를 열면 합성 데이터를 별도 SQLite 업무 DB에 적재하며, 승인·재처리·복구·검증은 저장된 작업과 실제 호출 원장을 사용한다.
 
 ## 실행
 
-Node.js 20.19 이상과 npm이 필요하다. 저장소 루트에서:
+macOS 또는 Linux에서 Python 3.11 이상과 Node.js 20.19 이상이 필요하다. 저장소 루트에서 아래 한 줄을 실행한다.
 
 ```bash
-cd web
-npm ci
-npm run dev
+python3.11 scripts/web.py
 ```
 
-다운로드 ZIP을 사용할 때는 압축을 푼 `Financial_Reconciliation_Web` 폴더에서 `cd web`을 생략하고 실행한다.
+[웹 워크벤치 열기](http://127.0.0.1:8780). 첫 실행에서 잠금 파일로 웹 의존성을 준비하고 화면을 빌드한다. 이후 소스가 바뀌면 다시 빌드한다. 서버와 화면은 같은 주소에서 제공한다. 실행한 터미널에서 `Ctrl+C`로 서버를 종료한다.
 
-터미널에 표시되는 localhost 주소를 연다. TSX 파일을 직접 더블클릭해서 여는 형태는 아니다.
+기본값은 GPU가 필요 없는 R0 규칙이다. 이미 설치되어 있는 로컬 Ollama 모델을 사용하려면 아래처럼 별도의 실험 저장소를 지정해 실행한다.
 
 ```bash
-npm run build
-npm run preview
+python3.11 scripts/web.py --port 8782 --data-dir generated_data/web-model --model qwen3-vl:4b
 ```
 
-잠금 파일 `package-lock.json`을 포함했다. 원본 다운로드 파일은 보관하고 수정본은 이 디렉터리에서 관리한다.
+## 화면에서 재현
 
-## 화면과 데이터
+1. 왼쪽에서 **반영 후 응답 유실**을 선택하고 **사례 조사 시작**을 누른다.
+2. **재처리 승인 → 승인 기록**을 누른다. 이 시점에 승인 레코드가 생성된다.
+3. **실행 중 프로세스 종료**를 누른다. 실제 작업 프로세스가 커밋 직후 exit 72로 종료된다. 화면에 **DB 작업 1건 · 최종 결정 0건**과 응답 기록이 없는 `execute_reprocess`가 표시된다.
+4. **새 세션에서 복구**를 누른다. 호출 기록에서 복구 세션의 `get_operation → get_case` 순서를 확인한다. 작업 수는 1건이며, 판정 영역에 결과 참조와 독립 SQL 검증이 표시된다.
 
-| 화면 | 현재 동작 |
-|---|---|
-| Overview | 5개 예시 사례에서 계산한 건수·상태 비율 |
-| Cases | case/batch/digest 검색, 상태 필터, 선택한 사건 상세 표시 |
-| Agent Workspace | 타이머로 진행하는 UI 데모. 일치 입력 예시 `case_1026`에서 Approver만 모의 승인 가능 |
-| Recovery Lab | Start → Inject → Resume 순서의 UI 상태 전환. 선택 사건·설정 변경 시 초기화 |
-| Evaluations | 기존 83개 + Tool 검사 28개 = 111개 회귀 검사, CLI v1→v2 관측값의 정적 표시 |
-| Audit Trail | 예시 호출 목록. Python runtime ledger의 실제 로그가 아님 |
-| Settings | 실제 여섯 Tool 계약 이름·구현 상태와 로컬 데모 역할 표시 |
+**정산 자료 지연**은 v1의 대기 결정 후 **지연 자료 반영 및 재조사**로 v2를 만들고, **총액은 같고 거래는 불일치**는 합계와 거래별 대조 결과를 함께 확인한다. **반영 전 중단**의 exit 71 직후에는 작업 수가 0건이다. 새 세션에서 미반영을 확인한 뒤 같은 의도로 실행한다.
 
-표시된 역할 선택은 서버 인증이 아니다. Agent의 reasoning 텍스트는 고정된 UI 설명이다. `case_1024` 등의 웹 예시 ID·digest는 실제 pilot fixture와 별개다. 현재 Python 데이터 계약의 금액은 정수 KRW이며, 실제 재처리는 원천 금액·수수료를 수정하는 기능이 아니다.
+기본 경로 `generated_data/web-mvp`에 실험 DB와 호출 기록을 보존한다. 화면 새로고침이나 서버 재시작 후에도 마지막 실험이 열린다. **새 실험**은 새 trial에 적재하며 이전 trial을 삭제하지 않는다.
 
-## 실제 검증 근거
+## 연결 범위
 
-- [Tool 1 정식 보고서](https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/f6fe614/docs/tools/reports/tool-01/validation-report.md)
-- [원시 결과](https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/f6fe614/docs/tools/reports/tool-01/results.json)
-- [CLI 재현 관측](https://github.com/Jungminii-1114/Financial-Reconciliation-Agent/blob/f6fe614/docs/tools/reports/tool-01/cli-replay.json)
-
-`src/data/results.json`, `src/data/cli-replay.json`은 보고서 커밋 `f6fe614`의 동일 파일 사본이다. 대상 구현 커밋은 `97d3400`이다. 시간 경과나 화면 새로고침에 따라 자동 갱신되지 않는다. 보고서가 바뀌면 사본도 함께 갱신해야 한다.
-
-111개에는 28개 Tool 검사가 이미 포함되어 있다. 이는 Agent 정확도·복구율·인젝션 방어율이 아니다. Agent 런타임·승인/실행 서비스·실제 공격 방어와 브라우저 API 연결은 후속 개발 범위다.
-
-## 검토 결과
-
-[REVIEW.md](REVIEW.md)에 수정 사항과 브라우저 검증 범위를 기록했다. 모바일에서는 상단 메뉴 버튼으로 화면을 전환한다. 검색 버튼 또는 Cmd/Ctrl+K로 Cases 검색창을 열 수 있다. 승인 모달은 Escape로 닫을 수 있다.
+- 화면과 API는 같은 loopback 주소에서 실행된다. 승인은 서버가 정한 로컬 합성 실험용 운영자 ID로 기록된다.
+- 원천 테이블, 작업·결정 DB, 호출 원장과 독립 SQL 평가 결과에서 화면 값이 나온다. 모델 옵션에는 합성 거래 건수와 검증 플래그만 전달한다.
+- 로컬 프로세스만 연결하는 모의 금융 업무 환경이다. 사용자 인증, 다중 작업자 배포, 실제 은행 업무 연결은 후속 범위다.
+- 최초 화면 설계는 [별도 프로토타입](http://127.0.0.1:8780/?view=prototype)으로 남겼다. 이 경로의 기록은 과거 검토 자료다. [CLI MVP](../docs/mvp.md) · [프로토타입 검토 기록](REVIEW.md)

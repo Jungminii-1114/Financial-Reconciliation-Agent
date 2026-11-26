@@ -1,0 +1,92 @@
+.live-shell { --navy: #112333; --ink: #182d39; --muted: #4d6470; --line: #d8e3e6; --teal: #087366; --pale: #edf5f4; min-height: 100vh; display: grid; grid-template-columns: 255px minmax(0, 1fr); background: #f3f7f7; color: var(--ink); font-family: "DM Sans", -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Malgun Gothic", sans-serif; }
+.live-shell button:focus-visible, .live-shell a:focus-visible { outline: 2px solid #2cae9a; outline-offset: 3px; }
+.live-shell button:disabled { opacity: .6; cursor: wait; }
+.live-sidebar { background: var(--navy); color: #e7f1f4; display: flex; flex-direction: column; min-width: 0; }
+.live-brand { display: flex; gap: 10px; align-items: center; min-height: 72px; padding: 14px 18px; border-bottom: 1px solid #304353; }
+.live-brand-icon { color: #81dec9; display: grid; place-items: center; border: 1px solid #2c6864; border-radius: 11px; background: #153d42; width: 36px; height: 36px; flex-shrink: 0; }
+.live-brand strong { display: block; font-size: 13px; }
+.live-brand small { display: block; color: #b5c9d0; margin-top: 3px; font-size: 11px; }
+.live-sidebar-section { color: #abc2cb; font-size: 12px; font-weight: 650; margin: 27px 19px 9px; }
+.live-nav { display: grid; gap: 3px; padding: 0 12px; }
+.live-nav button { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 10px; text-align: left; font-size: 13px; font-weight: 600; border: 1px solid transparent; border-radius: 9px; }
+.live-nav button:hover, .live-nav button.is-selected { background: #1b3a46; border-color: #2d6467; color: #e0faf2; }
+.live-nav code { display: block; color: #abc2cb; margin-top: 3px; font-size: 11px; font-weight: 400; }
+.live-sidebar-foot { padding: 20px; margin-top: auto; color: #b5c9d0; font-size: 12px; display: flex; align-items: center; gap: 8px; }
+.live-dot { width: 8px; height: 8px; background: #67d2a7; border-radius: 50%; }
+.live-bar { min-height: 57px; background: #fff; border-bottom: 1px solid var(--line); padding: 9px max(20px, 4vw); color: var(--muted); font-size: 13px; }
+.live-bar, .live-bar>span, .live-bar>div, .live-bar a { display: flex; align-items: center; gap: 9px; }
+.live-bar { justify-content: space-between; }
+.live-bar a, .live-bar button { padding: 7px; border-radius: 6px; }
+.live-bar a:hover, .live-bar button:hover { background: var(--pale); }
+.live-content { padding: 29px clamp(18px, 4vw, 60px) 28px; max-width: 1370px; margin: auto; }
+.live-hero { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-end; gap: 18px; margin-bottom: 24px; }
+.live-kicker { display: flex; gap: 6px; align-items: center; font-size: 12px; color: var(--teal); font-weight: 700; margin-bottom: 7px; }
+.live-hero h1 { font-size: clamp(24px, 3.2vw, 34px); font-weight: 740; letter-spacing: -.045em; line-height: 1.23; }
+.live-hero p { margin: 7px 0 0; color: var(--muted); font-size: 14px; }
+.live-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.live-primary, .live-secondary { padding: 10px 13px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; gap: 7px; font-weight: 690; font-size: 13px; }
+.live-primary { background: var(--teal); color: #fff; }
+.live-primary:hover { background: #075e55; }
+.live-secondary { background: #fff; border: 1px solid #c7d8dc; color: var(--ink); }
+.live-secondary:hover { background: var(--pale); }
+.live-card { min-width: 0; border: 1px solid var(--line); background: #fff; border-radius: 13px; overflow: hidden; }
+.live-empty { display: grid; justify-items: center; text-align: center; padding: 65px 16px; }
+.live-empty-icon { display: grid; place-items: center; border-radius: 11px; background: var(--pale); color: var(--teal); width: 45px; height: 45px; margin-bottom: 12px; }
+.live-empty h2 { font-size: 18px; font-weight: 700; }
+.live-empty p, .live-result p { margin-top: 8px; font-size: 13px; color: var(--muted); line-height: 1.55; }
+.live-step-row { margin-top: 18px; display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 7px; color: #405d69; font-size: 12px; }
+.live-step-row span { background: var(--pale); border-radius: 6px; padding: 5px 8px; }
+.live-context { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 12px; font-size: 12px; color: var(--muted); overflow-wrap: anywhere; }
+.live-chip { display: inline-block; padding: 3px 7px; font-size: 11px; font-weight: 650; border-radius: 5px; line-height: 1.3; white-space: nowrap; }
+.live-chip.gray { background: #e9eff3; color: #344e5d; }
+.live-chip.green { background: #def6e9; color: #176542; }
+.live-chip.amber { background: #fff0ce; color: #7c4a03; }
+.live-banner { padding: 12px 14px; border: 1px solid var(--line); border-radius: 9px; font-size: 13px; margin-bottom: 13px; }
+.live-banner code { margin-left: 6px; }
+.live-banner.live-wait { background: #fffaec; border-color: #ead7a6; color: #735016; }
+.live-banner.live-ok { background: #effbf5; border-color: #b7ddca; color: #175b41; }
+.live-banner.live-error { background: #fff1f0; border-color: #e8bbbb; color: #853732; }
+.live-busy { margin-bottom: 12px; color: var(--teal); font-size: 13px; }
+.live-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-bottom: 14px; }
+.live-metric { display: grid; gap: 7px; padding: 14px; }
+.live-metric div { display: flex; gap: 6px; align-items: center; color: var(--muted); font-size: 12px; }
+.live-metric svg { color: var(--teal); flex-shrink: 0; }
+.live-metric strong { font-size: clamp(18px, 2.1vw, 26px); font-variant-numeric: tabular-nums; }
+.live-metric small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--muted); font-size: 11px; }
+.live-grid { display: grid; grid-template-columns: minmax(0, 1.38fr) minmax(0, 1fr); gap: 14px; margin-bottom: 14px; }
+.live-panel-title { display: flex; align-items: center; gap: 8px; padding: 13px 15px; font-size: 14px; font-weight: 700; border-bottom: 1px solid var(--line); }
+.live-panel-title svg { color: var(--teal); }
+.live-totals { padding: 10px 15px; display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: 12px; }
+.live-totals strong { color: var(--ink); font-variant-numeric: tabular-nums; }
+.live-scroll { overflow-x: auto; }
+.live-scroll table { width: 100%; min-width: 330px; border-collapse: collapse; font-size: 12px; text-align: left; font-variant-numeric: tabular-nums; }
+.live-scroll th { background: #f3f7f8; color: var(--muted); font-weight: 650; white-space: nowrap; }
+.live-scroll th, .live-scroll td { padding: 9px 12px; border-top: 1px solid #e8eff0; }
+.live-result h3 { padding: 11px 15px 0; font-size: 16px; font-weight: 720; }
+.live-result p, .live-muted { padding: 0 15px 10px; }
+.live-muted { padding-top: 10px; font-size: 13px; color: var(--muted); }
+.live-checks { padding: 1px 15px 9px; }
+.live-checks li { display: flex; justify-content: space-between; gap: 8px; font-size: 12px; padding: 5px 0; border-bottom: 1px solid #edf2f3; }
+.live-pass { color: #176542; }
+.live-fail { color: #a7332a; }
+.live-ref { font-size: 11px; color: var(--muted); display: grid; gap: 4px; padding: 6px 15px 10px; }
+.live-ref code, .live-footer code { overflow-wrap: anywhere; }
+.live-footer { display: flex; gap: 7px; align-items: flex-start; color: var(--muted); margin-top: 14px; font-size: 11px; }
+.live-footer svg { flex-shrink: 0; }
+.live-dialog { background: #fff; color: var(--ink); width: min(460px, calc(100% - 32px)); margin: auto; padding: 20px; border-radius: 13px; }
+.live-dialog::backdrop { background: #102434a8; }
+.live-dialog h2 { font-size: 18px; font-weight: 720; }
+.live-dialog p { margin: 8px 0; font-size: 13px; color: var(--muted); }
+.live-dialog .live-actions { margin-top: 19px; justify-content: flex-end; }
+@media (max-width: 950px) { .live-shell { grid-template-columns: 211px minmax(0, 1fr); } .live-grid { grid-template-columns: minmax(0, 1fr); } }
+@media (max-width: 660px) {
+  .live-shell { display: block; }
+  .live-brand { min-height: 53px; }
+  .live-sidebar-section { margin: 12px 13px 6px; }
+  .live-nav { display: flex; overflow-x: auto; padding: 0 12px 9px; }
+  .live-nav button { white-space: nowrap; padding: 6px 8px; }
+  .live-sidebar-foot, .live-nav button svg { display: none; }
+  .live-content { padding-top: 20px; }
+  .live-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .live-empty { padding: 37px 10px; }
+}
